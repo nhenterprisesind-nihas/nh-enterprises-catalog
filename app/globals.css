@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-maroon-950 text-white;
+  }
+}
+
+@layer components {
+  .btn-gold {
+    @apply bg-gold-400 text-maroon-900 font-semibold px-4 py-2 rounded-lg
+           hover:bg-gold-300 active:bg-gold-500 transition-colors duration-200
+           shadow-md hover:shadow-lg;
+  }
+
+  .btn-maroon {
+    @apply bg-maroon-800 text-gold-400 font-semibold px-4 py-2 rounded-lg
+           border border-gold-400/30 hover:bg-maroon-700 active:bg-maroon-900
+           transition-colors duration-200;
+  }
+
+  .card-luxury {
+    @apply bg-gradient-to-br from-maroon-900 to-maroon-950
+           border border-gold-400/20 rounded-xl shadow-xl
+           hover:border-gold-400/40 transition-all duration-300;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #3a000f;
+}
+::-webkit-scrollbar-thumb {
+  background: #a67c00;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ffd700;
+}
