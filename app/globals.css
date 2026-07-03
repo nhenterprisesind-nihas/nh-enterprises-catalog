@@ -4,41 +4,40 @@
 
 @layer base {
   body {
-    @apply bg-maroon-950 text-white;
+    @apply bg-gray-50 text-gray-900;
   }
 }
 
 @layer components {
   .btn-gold {
-    @apply bg-gold-400 text-maroon-900 font-semibold px-4 py-2 rounded-lg
-           hover:bg-gold-300 active:bg-gold-500 transition-colors duration-200
-           shadow-md hover:shadow-lg;
+    @apply bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg
+           hover:bg-emerald-700 active:bg-emerald-800 transition-colors duration-200
+           shadow-sm hover:shadow-md;
   }
 
   .btn-maroon {
-    @apply bg-maroon-800 text-gold-400 font-semibold px-4 py-2 rounded-lg
-           border border-gold-400/30 hover:bg-maroon-700 active:bg-maroon-900
+    @apply bg-gray-100 text-gray-600 font-semibold px-4 py-2 rounded-lg
+           border border-gray-200 hover:bg-gray-200 active:bg-gray-300
            transition-colors duration-200;
   }
 
   .card-luxury {
-    @apply bg-gradient-to-br from-maroon-900 to-maroon-950
-           border border-gold-400/20 rounded-xl shadow-xl
-           hover:border-gold-400/40 transition-all duration-300;
+    @apply bg-white border border-gray-200 rounded-xl shadow-sm
+           hover:shadow-md transition-all duration-300;
   }
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #3a000f;
+  background: #f9fafb;
 }
 ::-webkit-scrollbar-thumb {
-  background: #a67c00;
-  border-radius: 4px;
+  background: #d1d5db;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ffd700;
+  background: #9ca3af;
 }

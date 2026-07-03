@@ -26,6 +26,17 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
   };
 
+  const handleQuantityChange = (value: string) => {
+    const num = parseInt(value, 10);
+    if (isNaN(num) || num < 1) {
+      const minQty = selectedPrice === "wholesale" ? MOQ_WHOLESALE : 1;
+      setQuantity(minQty);
+      return;
+    }
+    const minQty = selectedPrice === "wholesale" ? MOQ_WHOLESALE : 1;
+    setQuantity(Math.max(num, minQty));
+  };
+
   const handleAdd = () => {
     const effectiveQty = selectedPrice === "wholesale" ? Math.max(quantity, MOQ_WHOLESALE) : quantity;
     addToCart(product, effectiveQty, selectedPrice);
@@ -34,9 +45,9 @@ export default function ProductCard({ product }: ProductCardProps) {
   const isOutOfStock = product.stock <= 0;
 
   return (
-    <div className="card-luxury overflow-hidden flex flex-col">
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200">
       {/* Product Image */}
-      <div className="relative w-full h-48 bg-maroon-900 overflow-hidden">
+      <div className="relative w-full h-48 bg-gray-100 overflow-hidden">
         {product.image_url && !imageError ? (
           <img
             src={product.image_url}
@@ -45,29 +56,29 @@ export default function ProductCard({ product }: ProductCardProps) {
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-maroon-800 to-maroon-900">
-            <svg className="w-16 h-16 text-gold-400/30" fill="currentColor" viewBox="0 0 24 24">
+          <div className="w-full h-full flex items-center justify-center bg-gray-50">
+            <svg className="w-16 h-16 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
               <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
             </svg>
           </div>
         )}
         {/* Category Badge */}
-        <span className="absolute top-2 left-2 bg-gold-400/90 text-maroon-900 text-xs font-semibold px-2 py-1 rounded-md">
+        <span className="absolute top-2 left-2 bg-emerald-600 text-white text-xs font-medium px-2 py-0.5 rounded-md">
           {product.category}
         </span>
         {isOutOfStock && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <span className="text-red-400 font-bold text-lg">Out of Stock</span>
+          <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+            <span className="text-red-600 font-bold text-lg bg-white px-3 py-1 rounded-md border border-red-200">Out of Stock</span>
           </div>
         )}
       </div>
 
       {/* Product Info */}
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-gold-400 font-serif text-lg font-semibold mb-1 line-clamp-2">
+        <h3 className="text-gray-900 font-semibold text-base mb-1 line-clamp-2">
           {product.name}
         </h3>
-        <p className="text-maroon-200 text-sm mb-3 line-clamp-2 flex-1">
+        <p className="text-gray-500 text-sm mb-3 line-clamp-2 flex-1">
           {product.description}
         </p>
 
@@ -78,8 +89,8 @@ export default function ProductCard({ product }: ProductCardProps) {
               onClick={() => setSelectedPrice("mrp")}
               className={`text-center p-2 rounded-md text-xs transition-all ${
                 selectedPrice === "mrp"
-                  ? "bg-gold-400 text-maroon-900 font-bold"
-                  : "bg-maroon-800 text-maroon-200 hover:bg-maroon-700"
+                  ? "bg-emerald-600 text-white font-bold"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               <div className="font-medium">MRP</div>
@@ -89,8 +100,8 @@ export default function ProductCard({ product }: ProductCardProps) {
               onClick={() => setSelectedPrice("retail")}
               className={`text-center p-2 rounded-md text-xs transition-all ${
                 selectedPrice === "retail"
-                  ? "bg-gold-400 text-maroon-900 font-bold"
-                  : "bg-maroon-800 text-maroon-200 hover:bg-maroon-700"
+                  ? "bg-emerald-600 text-white font-bold"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               <div className="font-medium">Retail</div>
@@ -103,8 +114,8 @@ export default function ProductCard({ product }: ProductCardProps) {
               }}
               className={`text-center p-2 rounded-md text-xs transition-all ${
                 selectedPrice === "wholesale"
-                  ? "bg-gold-400 text-maroon-900 font-bold"
-                  : "bg-maroon-800 text-maroon-200 hover:bg-maroon-700"
+                  ? "bg-emerald-600 text-white font-bold"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               <div className="font-medium">Wholesale</div>
@@ -112,30 +123,34 @@ export default function ProductCard({ product }: ProductCardProps) {
             </button>
           </div>
           {selectedPrice === "wholesale" && (
-            <p className="text-gold-300 text-xs text-center">
-              ⚡ MOQ: {MOQ_WHOLESALE} units minimum
+            <p className="text-amber-600 text-xs text-center font-medium bg-amber-50 py-1 rounded">
+              ⚡ MOQ: 10 units minimum
             </p>
           )}
         </div>
 
         {/* Quantity + Add to Cart */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center border border-gold-400/30 rounded-lg overflow-hidden">
+          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
             <button
               onClick={() => {
                 const minQty = selectedPrice === "wholesale" ? MOQ_WHOLESALE : 1;
                 setQuantity(Math.max(quantity - 1, minQty));
               }}
-              className="px-3 py-1 text-gold-400 hover:bg-maroon-700 transition-colors"
+              className="px-2 py-1.5 text-gray-600 hover:bg-gray-100 transition-colors text-sm"
             >
               −
             </button>
-            <span className="px-3 py-1 text-gold-300 text-sm min-w-[2.5rem] text-center">
-              {quantity}
-            </span>
+            <input
+              type="number"
+              min={selectedPrice === "wholesale" ? MOQ_WHOLESALE : 1}
+              value={quantity}
+              onChange={(e) => handleQuantityChange(e.target.value)}
+              className="w-12 text-center text-sm text-gray-800 border-x border-gray-200 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
             <button
               onClick={() => setQuantity(quantity + 1)}
-              className="px-3 py-1 text-gold-400 hover:bg-maroon-700 transition-colors"
+              className="px-2 py-1.5 text-gray-600 hover:bg-gray-100 transition-colors text-sm"
             >
               +
             </button>
@@ -143,7 +158,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <button
             onClick={handleAdd}
             disabled={isOutOfStock}
-            className="btn-gold flex-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-emerald-600 text-white font-semibold text-sm px-3 py-2 rounded-lg hover:bg-emerald-700 active:bg-emerald-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             Add ₹{(getPrice() * quantity).toLocaleString("en-IN")}
           </button>
@@ -151,7 +166,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Stock indicator */}
         {!isOutOfStock && product.stock < 20 && (
-          <p className="text-yellow-400 text-xs mt-2 text-center">
+          <p className="text-amber-600 text-xs mt-2 text-center">
             Only {product.stock} left in stock
           </p>
         )}

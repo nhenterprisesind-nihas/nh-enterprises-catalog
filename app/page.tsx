@@ -18,14 +18,14 @@ export default function CatalogPage() {
       const sheetUrl = process.env.NEXT_PUBLIC_SHEET_URL;
 
       if (!sheetUrl) {
-        // Use sample data for demo
         setProducts(getSampleProducts());
         setLoading(false);
         return;
       }
 
       try {
-        const response = await fetch(sheetUrl);
+        const cacheBuster = `${sheetUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
+        const response = await fetch(sheetUrl + cacheBuster);
         const csvText = await response.text();
 
         Papa.parse(csvText, {
@@ -77,10 +77,10 @@ export default function CatalogPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-gold-400/30 border-t-gold-400 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gold-400 font-serif text-xl">Loading Catalog...</p>
+          <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 font-medium text-lg">Loading Products...</p>
         </div>
       </div>
     );
@@ -88,37 +88,51 @@ export default function CatalogPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="card-luxury p-8 max-w-md text-center">
-          <svg className="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-white">
+        <div className="bg-white border border-red-200 rounded-xl p-8 max-w-md text-center shadow-sm">
+          <svg className="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
-          <h2 className="text-gold-400 font-serif text-xl mb-2">Something went wrong</h2>
-          <p className="text-maroon-200">{error}</p>
+          <h2 className="text-gray-800 font-semibold text-xl mb-2">Something went wrong</h2>
+          <p className="text-gray-500">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-maroon-950/95 backdrop-blur-sm border-b border-gold-400/20">
+      <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <h1 className="text-gold-400 font-serif text-2xl sm:text-3xl font-bold">
-                ✦ Premium Catalog
-              </h1>
-              <p className="text-maroon-300 text-sm">
-                {products.length} Products • 3-Tier Pricing
-              </p>
+            <div className="flex items-center gap-3">
+              {/* Brand Logo Placeholder */}
+              <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
+                {process.env.NEXT_PUBLIC_LOGO_URL ? (
+                  <img
+                    src={process.env.NEXT_PUBLIC_LOGO_URL}
+                    alt="Brand Logo"
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-bold text-lg">N</span>
+                )}
+              </div>
+              <div>
+                <h1 className="text-gray-900 font-bold text-xl sm:text-2xl tracking-tight">
+                  NIKSHAS Online Shop
+                </h1>
+                <p className="text-gray-500 text-xs">
+                  {products.length} Products • 3-Tier Pricing
+                </p>
+              </div>
             </div>
 
             {/* Search */}
             <div className="relative w-full sm:w-72">
               <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-maroon-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -130,7 +144,7 @@ export default function CatalogPage() {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-maroon-900 border border-gold-400/20 rounded-lg text-white placeholder-maroon-400 focus:outline-none focus:border-gold-400/50 transition-colors"
+                className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -143,8 +157,8 @@ export default function CatalogPage() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   selectedCategory === cat
-                    ? "bg-gold-400 text-maroon-900"
-                    : "bg-maroon-800 text-maroon-200 hover:bg-maroon-700 border border-gold-400/10"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200"
                 }`}
               >
                 {cat}
@@ -158,7 +172,7 @@ export default function CatalogPage() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         {filteredProducts.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-maroon-400 text-lg">No products found matching your criteria.</p>
+            <p className="text-gray-400 text-lg">No products found matching your criteria.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

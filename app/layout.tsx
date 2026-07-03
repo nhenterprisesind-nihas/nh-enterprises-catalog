@@ -3,8 +3,8 @@ import { CartProvider } from "@/context/CartContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Premium Product Catalog",
-  description: "Luxury product catalog with wholesale pricing",
+  title: "NIKSHAS Online Shop",
+  description: "Premium product catalog with wholesale pricing",
 };
 
 export default function RootLayout({
@@ -20,7 +20,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen font-sans antialiased">
+      <body className="min-h-screen font-sans antialiased bg-gray-50">
         <CartProvider>{children}</CartProvider>
       </body>
     </html>
