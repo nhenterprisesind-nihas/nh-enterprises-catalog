@@ -5,6 +5,7 @@ import Papa from "papaparse";
 import ProductCard from "@/components/ProductCard";
 import Cart from "@/components/Cart";
 import { Product } from "@/context/CartContext";
+import Footer from "@/components/Footer";
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,16 +33,32 @@ export default function CatalogPage() {
           header: true,
           skipEmptyLines: true,
           complete: (results) => {
-            const parsed: Product[] = results.data.map((row: any) => ({
-              name: row.name || "",
-              description: row.description || "",
-              category: row.category || "Uncategorized",
-              mrp: parseFloat(row.mrp) || 0,
-              retail_price: parseFloat(row.retail_price) || 0,
-              wholesale_price: parseFloat(row.wholesale_price) || 0,
-              image_url: row.image_url || "",
-              stock: parseInt(row.stock) || 0,
-            }));
+            const parsed: Product[] = results.data.map((row: any) => {
+              const images: string[] = [];
+              const hasMultiImages = row.image_url_1 !== undefined;
+
+              if (hasMultiImages) {
+                for (let i = 1; i <= 5; i++) {
+                  const url = row[`image_url_${i}`];
+                  if (url && url.trim()) {
+                    images.push(url.trim());
+                  }
+                }
+              } else if (row.image_url && row.image_url.trim()) {
+                images.push(row.image_url.trim());
+              }
+
+              return {
+                name: row.name || "",
+                description: row.description || "",
+                category: row.category || "Uncategorized",
+                mrp: parseFloat(row.mrp) || 0,
+                retail_price: parseFloat(row.retail_price) || 0,
+                wholesale_price: parseFloat(row.wholesale_price) || 0,
+                images,
+                stock: parseInt(row.stock) || 0,
+              };
+            });
             setProducts(parsed.filter((p) => p.name));
             setLoading(false);
           },
@@ -77,7 +94,7 @@ export default function CatalogPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-600 font-medium text-lg">Loading Products...</p>
@@ -88,7 +105,7 @@ export default function CatalogPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-white">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FDFBF7]">
         <div className="bg-white border border-red-200 rounded-xl p-8 max-w-md text-center shadow-sm">
           <svg className="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -101,7 +118,7 @@ export default function CatalogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#FDFBF7]">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -121,10 +138,10 @@ export default function CatalogPage() {
               </div>
               <div>
                 <h1 className="text-gray-900 font-bold text-xl sm:text-2xl tracking-tight">
-                  NIKSHAS Online Shop
+                  Nikshas Collections
                 </h1>
                 <p className="text-gray-500 text-xs">
-                  {products.length} Products • 3-Tier Pricing
+                  Quality products at retail and wholesale pricing
                 </p>
               </div>
             </div>
@@ -185,6 +202,9 @@ export default function CatalogPage() {
 
       {/* Cart Component */}
       <Cart />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
@@ -198,7 +218,11 @@ function getSampleProducts(): Product[] {
       mrp: 12999,
       retail_price: 9999,
       wholesale_price: 7499,
-      image_url: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400",
+      images: [
+        "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400",
+        "https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=400",
+        "https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=400",
+      ],
       stock: 25,
     },
     {
@@ -208,7 +232,10 @@ function getSampleProducts(): Product[] {
       mrp: 599,
       retail_price: 449,
       wholesale_price: 349,
-      image_url: "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400",
+      images: [
+        "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400",
+        "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400",
+      ],
       stock: 150,
     },
     {
@@ -218,7 +245,9 @@ function getSampleProducts(): Product[] {
       mrp: 1499,
       retail_price: 1199,
       wholesale_price: 899,
-      image_url: "https://images.unsplash.com/photo-1605882174146-a464b70cf691?w=400",
+      images: [
+        "https://images.unsplash.com/photo-1605882174146-a464b70cf691?w=400",
+      ],
       stock: 45,
     },
     {
@@ -228,7 +257,11 @@ function getSampleProducts(): Product[] {
       mrp: 899,
       retail_price: 749,
       wholesale_price: 599,
-      image_url: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400",
+      images: [
+        "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400",
+        "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400",
+        "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400",
+      ],
       stock: 80,
     },
     {
@@ -238,7 +271,10 @@ function getSampleProducts(): Product[] {
       mrp: 999,
       retail_price: 799,
       wholesale_price: 549,
-      image_url: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400",
+      images: [
+        "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400",
+        "https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=400",
+      ],
       stock: 60,
     },
     {
@@ -248,7 +284,12 @@ function getSampleProducts(): Product[] {
       mrp: 2499,
       retail_price: 1999,
       wholesale_price: 1499,
-      image_url: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400",
+      images: [
+        "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400",
+        "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=400",
+        "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=400",
+        "https://images.unsplash.com/photo-1630019852942-f89202989a59?w=400",
+      ],
       stock: 35,
     },
     {
@@ -258,7 +299,9 @@ function getSampleProducts(): Product[] {
       mrp: 1299,
       retail_price: 999,
       wholesale_price: 749,
-      image_url: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400",
+      images: [
+        "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400",
+      ],
       stock: 100,
     },
     {
@@ -268,7 +311,13 @@ function getSampleProducts(): Product[] {
       mrp: 3499,
       retail_price: 2799,
       wholesale_price: 1999,
-      image_url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400",
+      images: [
+        "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400",
+        "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=400",
+        "https://images.unsplash.com/photo-1582738411706-bfc8e691d1c2?w=400",
+        "https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?w=400",
+        "https://images.unsplash.com/photo-1578926288207-a90a5366759d?w=400",
+      ],
       stock: 15,
     },
   ];

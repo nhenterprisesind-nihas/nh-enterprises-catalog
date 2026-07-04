@@ -40,7 +40,7 @@ export default function Cart() {
   };
 
   const generateWhatsAppMessage = () => {
-    let message = "🛒 *New Order — NIKSHAS Online Shop*\n\n";
+    let message = "🛒 *New Order — Nikshas Collections*\n\n";
 
     if (customerName || customerPhone || customerAddress) {
       message += "📋 *Customer Details:*\n";
@@ -164,9 +164,9 @@ export default function Cart() {
                         <div className="flex items-start gap-3">
                           {/* Product Image */}
                           <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
-                            {item.product.image_url ? (
+                            {item.product.images[0] ? (
                               <img
-                                src={item.product.image_url}
+                                src={item.product.images[0]}
                                 alt={item.product.name}
                                 className="w-full h-full object-cover"
                               />
