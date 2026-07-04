@@ -115,7 +115,6 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200">
-        {/* Product Image Slider */}
         <div className="relative w-full h-48 bg-gray-100 overflow-hidden group">
           {images.length > 0 ? (
             <>
@@ -149,7 +148,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                 ))}
               </div>
 
-              {/* Slider Controls */}
               {hasMultipleImages && (
                 <>
                   <button
@@ -165,7 +163,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                     <ChevronRightIcon className="w-4 h-4 text-gray-700" />
                   </button>
 
-                  {/* Dot Indicators */}
                   <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
                     {images.map((_, idx) => (
                       <button
@@ -180,7 +177,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </>
               )}
 
-              {/* Zoom Button */}
               <button
                 onClick={() => openGallery(currentSlide)}
                 className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -197,7 +193,6 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
 
-          {/* Category Badge */}
           <span className="absolute top-2 left-2 bg-emerald-600 text-white text-xs font-medium px-2 py-0.5 rounded-md z-10">
             {product.category}
           </span>
@@ -208,7 +203,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
-        {/* Product Info */}
         <div className="p-4 flex flex-col flex-1">
           <h3 className="text-gray-900 font-semibold text-base mb-1 line-clamp-2">
             {product.name}
@@ -217,7 +211,6 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.description}
           </p>
 
-          {/* Price Tiers */}
           <div className="space-y-2 mb-3">
             <div className="grid grid-cols-3 gap-1">
               <div
@@ -259,7 +252,6 @@ export default function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
 
-          {/* Quantity + Add to Cart */}
           <div className="flex items-center gap-2">
             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
               <button
@@ -291,129 +283,122 @@ export default function ProductCard({ product }: ProductCardProps) {
               className="flex-1 bg-emerald-600 text-white font-semibold text-sm px-3 py-2 rounded-lg hover:bg-emerald-700 active:bg-emerald-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               Add ₹{(getPrice() * quantity).toLocaleString("en-IN")}
-          </button>
+            </button>
+          </div>
+
+          {!isOutOfStock && product.stock < 20 && (
+            <p className="text-amber-600 text-xs mt-2 text-center">
+              Only {product.stock} left in stock
+            </p>
+          )}
         </div>
-
-        {/* Stock indicator */}
-        {!isOutOfStock && product.stock < 20 && (
-          <p className="text-amber-600 text-xs mt-2 text-center">
-            Only {product.stock} left in stock
-          </p>
-        )}
       </div>
-    </div>
 
-    {/* Full-screen Gallery Modal */}
-    {galleryOpen && images.length > 0 && (
-      <ImageGalleryModal
-        images={images}
-        initialIndex={galleryIndex}
-        productName={product.name}
-        onClose={() => setGalleryOpen(false)}
-      />
-    )}
-  </>
-);
+      {galleryOpen && images.length > 0 && (
+        <ImageGalleryModal
+          images={images}
+          initialIndex={galleryIndex}
+          productName={product.name}
+          onClose={() => setGalleryOpen(false)}
+        />
+      )}
+    </>
+  );
 }
 
 interface ImageGalleryModalProps {
-images: string[];
-initialIndex: number;
-productName: string;
-onClose: () => void;
+  images: string[];
+  initialIndex: number;
+  productName: string;
+  onClose: () => void;
 }
 
 function ImageGalleryModal({ images, initialIndex, productName, onClose }: ImageGalleryModalProps) {
-const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
-const goNext = useCallback(() => {
-  setCurrentIndex((prev) => (prev + 1) % images.length);
-}, [images.length]);
+  const goNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  }, [images.length]);
 
-const goPrev = useCallback(() => {
-  setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-}, [images.length]);
+  const goPrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  }, [images.length]);
 
-useEffect(() => {
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") onClose();
-    if (e.key === "ArrowRight") goNext();
-    if (e.key === "ArrowLeft") goPrev();
-  };
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowLeft") goPrev();
+    };
 
-  document.addEventListener("keydown", handleKeyDown);
-  document.body.style.overflow = "hidden";
-  return () => {
-    document.removeEventListener("keydown", handleKeyDown);
-    document.body.style.overflow = "";
-  };
-}, [onClose, goNext, goPrev]);
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [onClose, goNext, goPrev]);
 
-return (
-  <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center">
-    {/* Close Button */}
-    <button
-      onClick={onClose}
-      className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-    >
-      <XIcon className="w-6 h-6 text-white" />
-    </button>
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center">
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+      >
+        <XIcon className="w-6 h-6 text-white" />
+      </button>
 
-    {/* Product name */}
-    <div className="absolute top-4 left-4 z-10">
-      <h3 className="text-white font-semibold text-lg">{productName}</h3>
-      <p className="text-white/60 text-sm">{currentIndex + 1} / {images.length}</p>
-    </div>
-
-    {/* Main Image */}
-    <div className="flex-1 flex items-center justify-center w-full px-16 py-20">
-      <img
-        src={images[currentIndex]}
-        alt={`${productName} - Image ${currentIndex + 1}`}
-        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-      />
-    </div>
-
-    {/* Navigation Arrows */}
-    {images.length > 1 && (
-      <>
-        <button
-          onClick={goPrev}
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-        >
-          <ChevronLeftIcon className="w-7 h-7 text-white" />
-        </button>
-        <button
-          onClick={goNext}
-          className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-        >
-          <ChevronRightIcon className="w-7 h-7 text-white" />
-        </button>
-      </>
-    )}
-
-    {/* Thumbnail Strip */}
-    {images.length > 1 && (
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 px-4 py-3 bg-black/50 rounded-xl backdrop-blur-sm">
-        {images.map((url, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentIndex(idx)}
-            className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
-              idx === currentIndex
-                ? "border-emerald-400 scale-110 shadow-lg"
-                : "border-transparent opacity-60 hover:opacity-100"
-            }`}
-          >
-            <img
-              src={url}
-              alt={`Thumbnail ${idx + 1}`}
-              className="w-full h-full object-cover"
-            />
-          </button>
-        ))}
+      <div className="absolute top-4 left-4 z-10">
+        <h3 className="text-white font-semibold text-lg">{productName}</h3>
+        <p className="text-white/60 text-sm">{currentIndex + 1} / {images.length}</p>
       </div>
-    )}
-  </div>
-);
+
+      <div className="flex-1 flex items-center justify-center w-full px-16 py-20">
+        <img
+          src={images[currentIndex]}
+          alt={`${productName} - Image ${currentIndex + 1}`}
+          className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+        />
+      </div>
+
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={goPrev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+          >
+            <ChevronLeftIcon className="w-7 h-7 text-white" />
+          </button>
+          <button
+            onClick={goNext}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+          >
+            <ChevronRightIcon className="w-7 h-7 text-white" />
+          </button>
+        </>
+      )}
+
+      {images.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 px-4 py-3 bg-black/50 rounded-xl backdrop-blur-sm">
+          {images.map((url, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                idx === currentIndex
+                  ? "border-emerald-400 scale-110 shadow-lg"
+                  : "border-transparent opacity-60 hover:opacity-100"
+              }`}
+            >
+              <img
+                src={url}
+                alt={`Thumbnail ${idx + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

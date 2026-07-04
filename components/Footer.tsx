@@ -68,17 +68,14 @@ export default function Footer() {
   return (
     <footer className="bg-emerald-900 text-white mt-12">
       <div className="max-w-7xl mx-auto px-4 py-10">
-        {/* Brand */}
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold tracking-tight text-white">
             Nikshas Collections
           </h2>
           <p className="text-emerald-200 text-sm mt-1">
-            Quality products at retail &amp; wholesale pricing
+            Quality products at retail & wholesale pricing
           </p>
         </div>
-
-        {/* Social Links */}
         <div className="flex flex-wrap items-center justify-center gap-6">
           {footerLinks.map((link) => {
             const Icon = link.icon;
@@ -96,8 +93,6 @@ export default function Footer() {
             );
           })}
         </div>
-
-        {/* Divider */}
         <div className="border-t border-emerald-700 mt-8 pt-6">
           <p className="text-center text-emerald-300 text-xs">
             © {new Date().getFullYear()} NH Enterprises. All rights reserved.
