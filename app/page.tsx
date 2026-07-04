@@ -25,7 +25,7 @@ export default function CatalogPage() {
       }
 
       try {
-        const cacheBuster = `${sheetUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
+        const cacheBuster = `${sheetUrl.includes("?") ? "&" : "?"}"t=" + Date.now()`;
         const response = await fetch(sheetUrl + cacheBuster);
         const csvText = await response.text();
 
@@ -119,12 +119,10 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
-      {/* Header */}
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              {/* Brand Logo Placeholder */}
               <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
                 {process.env.NEXT_PUBLIC_LOGO_URL ? (
                   <img
@@ -145,15 +143,8 @@ export default function CatalogPage() {
                 </p>
               </div>
             </div>
-
-            {/* Search */}
             <div className="relative w-full sm:w-72">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
@@ -165,8 +156,6 @@ export default function CatalogPage() {
               />
             </div>
           </div>
-
-          {/* Category Filters */}
           <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-thin">
             {categories.map((cat) => (
               <button
@@ -184,8 +173,6 @@ export default function CatalogPage() {
           </div>
         </div>
       </header>
-
-      {/* Products Grid */}
       <main className="max-w-7xl mx-auto px-4 py-6">
         {filteredProducts.length === 0 ? (
           <div className="text-center py-16">
@@ -199,11 +186,7 @@ export default function CatalogPage() {
           </div>
         )}
       </main>
-
-      {/* Cart Component */}
       <Cart />
-
-      {/* Footer */}
       <Footer />
     </div>
   );
@@ -224,101 +207,6 @@ function getSampleProducts(): Product[] {
         "https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=400",
       ],
       stock: 25,
-    },
-    {
-      name: "Organic Turmeric Powder",
-      description: "100% pure lakadong turmeric from Meghalaya, 500g pack",
-      category: "Groceries",
-      mrp: 599,
-      retail_price: 449,
-      wholesale_price: 349,
-      images: [
-        "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400",
-        "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400",
-      ],
-      stock: 150,
-    },
-    {
-      name: "Brass Diya Set (6pcs)",
-      description: "Traditional hand-crafted brass oil lamps for puja",
-      category: "Home & Decor",
-      mrp: 1499,
-      retail_price: 1199,
-      wholesale_price: 899,
-      images: [
-        "https://images.unsplash.com/photo-1605882174146-a464b70cf691?w=400",
-      ],
-      stock: 45,
-    },
-    {
-      name: "Kashmiri Saffron (1g)",
-      description: "Grade-1 Mongra saffron from Kashmir valley",
-      category: "Groceries",
-      mrp: 899,
-      retail_price: 749,
-      wholesale_price: 599,
-      images: [
-        "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400",
-        "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400",
-        "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400",
-      ],
-      stock: 80,
-    },
-    {
-      name: "Handmade Leather Journal",
-      description: "Vintage style A5 journal with 200 handmade pages",
-      category: "Stationery",
-      mrp: 999,
-      retail_price: 799,
-      wholesale_price: 549,
-      images: [
-        "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400",
-        "https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=400",
-      ],
-      stock: 60,
-    },
-    {
-      name: "Sterling Silver Jhumka",
-      description: "Oxidized silver traditional jhumka earrings",
-      category: "Jewelry",
-      mrp: 2499,
-      retail_price: 1999,
-      wholesale_price: 1499,
-      images: [
-        "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400",
-        "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=400",
-        "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=400",
-        "https://images.unsplash.com/photo-1630019852942-f89202989a59?w=400",
-      ],
-      stock: 35,
-    },
-    {
-      name: "Darjeeling First Flush Tea",
-      description: "Premium FTGFOP1 first flush tea, 250g tin",
-      category: "Groceries",
-      mrp: 1299,
-      retail_price: 999,
-      wholesale_price: 749,
-      images: [
-        "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400",
-      ],
-      stock: 100,
-    },
-    {
-      name: "Madhubani Art Print",
-      description: "Museum-quality Madhubani painting print on canvas, 18x24 inch",
-      category: "Home & Decor",
-      mrp: 3499,
-      retail_price: 2799,
-      wholesale_price: 1999,
-      images: [
-        "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400",
-        "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=400",
-        "https://images.unsplash.com/photo-1582738411706-bfc8e691d1c2?w=400",
-        "https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?w=400",
-        "https://images.unsplash.com/photo-1578926288207-a90a5366759d?w=400",
-      ],
-      stock: 15,
-    },
+    }
   ];
 }
