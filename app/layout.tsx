@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "NIKSHAS Online Shop",
-  description: "Premium product catalog with wholesale pricing",
+  description: "Premium Product Catalog with Retail & Wholesale Pricing",
 };
 
 export default function RootLayout({
