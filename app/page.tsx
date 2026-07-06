@@ -25,7 +25,7 @@ export default function CatalogPage() {
       }
 
       try {
-        const cacheBuster = `${sheetUrl.includes("?") ? "&" : "?"}"t=" + Date.now()`;
+        const cacheBuster = `${sheetUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
         const response = await fetch(sheetUrl + cacheBuster);
         const csvText = await response.text();
 
