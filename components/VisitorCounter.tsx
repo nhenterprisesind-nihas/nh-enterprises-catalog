@@ -3,27 +3,25 @@
 import { useEffect, useState } from "react";
 
 export default function VisitorCounter() {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
-    const STORAGE_KEY = "nh_total_visits";
-    const SESSION_KEY = "nh_session_visited";
-
-    let visits = Number(localStorage.getItem(STORAGE_KEY) || "0");
-
-    // Count only once per browser session
-    if (!sessionStorage.getItem(SESSION_KEY)) {
-      visits++;
-      localStorage.setItem(STORAGE_KEY, visits.toString());
-      sessionStorage.setItem(SESSION_KEY, "true");
+    async function load() {
+      try {
+        const res = await fetch("/api/visitor");
+        const data = await res.json();
+        setCount(data.count);
+      } catch (err) {
+        console.error(err);
+      }
     }
 
-    setCount(Number(localStorage.getItem(STORAGE_KEY) || visits));
+    load();
   }, []);
 
   return (
     <p className="text-center text-emerald-300 text-xs mt-2">
-      👁️ {count.toLocaleString("en-IN")} visitors
+      👁️ {count === null ? "Loading..." : count.toLocaleString("en-IN")} Visitors
     </p>
   );
 }
