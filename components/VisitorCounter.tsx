@@ -9,6 +9,7 @@ const COUNTER_NAME = "site-visits";
 
 export default function VisitorCounter() {
   const [count, setCount] = useState<number | null>(null);
+  const [failed, setFailed] = useState(false);
   const hasFired = useRef(false);
 
   useEffect(() => {
@@ -23,13 +24,26 @@ export default function VisitorCounter() {
     fetch(`https://api.counterapi.dev/v1/${WORKSPACE}/${COUNTER_NAME}/up`, {
       signal: controller.signal,
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Counter API responded ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         const value = data?.value ?? data?.count ?? data?.data?.up_count;
-        if (typeof value === "number") setCount(value);
+        if (typeof value === "number") {
+          setCount(value);
+        } else {
+          console.warn("VisitorCounter: unexpected response shape", data);
+          setFailed(true);
+        }
       })
-      .catch(() => {
-        // Fail silently — a missing visitor count shouldn't break the footer.
+      .catch((err) => {
+        // Most common cause: an ad-blocker or privacy extension blocked the
+        // request (domains with "counter" in the name are frequently
+        // targeted by blocklists). Logging here so it's visible in devtools
+        // instead of silently disappearing.
+        console.warn("VisitorCounter: failed to fetch count", err);
+        setFailed(true);
       })
       .finally(() => clearTimeout(timeoutId));
 
@@ -39,11 +53,17 @@ export default function VisitorCounter() {
     };
   }, []);
 
-  if (count === null) return null;
+  if (failed) {
+    return (
+      <p className="text-center text-emerald-400/50 text-xs mt-2">
+        Visitor count unavailable
+      </p>
+    );
+  }
 
   return (
     <p className="text-center text-emerald-300 text-xs mt-2">
-      👁️ {count.toLocaleString("en-IN")} visitors
+      👁️ {count !== null ? count.toLocaleString("en-IN") : "…"} visitors
     </p>
   );
 }
