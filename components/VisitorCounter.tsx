@@ -1,41 +1,29 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function VisitorCounter() {
-  const [count, setCount] = useState<number | null>(null);
-  const [failed, setFailed] = useState(false);
-  const hasVisited = useRef(false);
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (hasVisited.current) return;
-    hasVisited.current = true;
+    const STORAGE_KEY = "nh_total_visits";
+    const SESSION_KEY = "nh_session_visited";
 
-    fetch("https://api.countapi.xyz/hit/nh-enterprises/catalog")
-      .then((res) => {
-        if (!res.ok) throw new Error("Unable to fetch visitor count");
-        return res.json();
-      })
-      .then((data) => {
-        setCount(data.value);
-      })
-      .catch((err) => {
-        console.error(err);
-        setFailed(true);
-      });
+    let visits = Number(localStorage.getItem(STORAGE_KEY) || "0");
+
+    // Count only once per browser session
+    if (!sessionStorage.getItem(SESSION_KEY)) {
+      visits++;
+      localStorage.setItem(STORAGE_KEY, visits.toString());
+      sessionStorage.setItem(SESSION_KEY, "true");
+    }
+
+    setCount(Number(localStorage.getItem(STORAGE_KEY) || visits));
   }, []);
-
-  if (failed) {
-    return (
-      <p className="text-center text-emerald-400 text-xs mt-2">
-        Visitor counter unavailable
-      </p>
-    );
-  }
 
   return (
     <p className="text-center text-emerald-300 text-xs mt-2">
-      👁️ {count === null ? "Loading..." : count.toLocaleString("en-IN")} visitors
+      👁️ {count.toLocaleString("en-IN")} visitors
     </p>
   );
 }
