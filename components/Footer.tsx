@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import VisitorCounter from "./VisitorCounter";
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -97,6 +98,7 @@ export default function Footer() {
           <p className="text-center text-emerald-300 text-xs">
             © {new Date().getFullYear()} NH Enterprises. All rights reserved.
           </p>
+          <VisitorCounter />
         </div>
       </div>
     </footer>
