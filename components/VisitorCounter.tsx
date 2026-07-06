@@ -3,34 +3,18 @@
 import { useEffect, useState } from "react";
 
 export default function VisitorCounter() {
-  const [count, setCount] = useState<string>("Loading...");
+  const [count, setCount] = useState<number>();
 
   useEffect(() => {
-    async function loadCounter() {
-      try {
-        const response = await fetch(
-          "https://api.visitorbadge.io/api/visitors?path=nh-enterprises-catalog"
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch");
-        }
-
-        const data = await response.json();
-
-        setCount(Number(data.total).toLocaleString("en-IN"));
-      } catch (err) {
-        console.error(err);
-        setCount("--");
-      }
-    }
-
-    loadCounter();
+    fetch("/api/visitor")
+      .then((r) => r.json())
+      .then((d) => setCount(d.count))
+      .catch(console.error);
   }, []);
 
   return (
     <p className="text-center text-emerald-300 text-xs mt-2">
-      👁️ {count} Visitors
+      👁️ {count ? count.toLocaleString("en-IN") : "Loading..."} Visitors
     </p>
   );
 }
