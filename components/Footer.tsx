@@ -53,7 +53,7 @@ const footerLinks = [
   },
   {
     label: "Facebook",
-    href: "https://facebook.com/nhentrprises",
+    href: "https://www.facebook.com/profile.php?id=61568503961128",
     icon: FacebookIcon,
     color: "hover:text-blue-400",
   },
@@ -81,7 +81,7 @@ export default function Footer() {
           {footerLinks.map((link) => {
             const Icon = link.icon;
             return (
-              <a
+              
                 key={link.label}
                 href={link.href}
                 target={link.href.startsWith("mailto:") ? undefined : "_blank"}
