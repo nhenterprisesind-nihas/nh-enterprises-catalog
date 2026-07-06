@@ -78,21 +78,22 @@ export default function Footer() {
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-6">
-          {footerLinks.map((link) => {
-            const Icon = link.icon;
-            return (
-              
-                key={link.label}
-                href={link.href}
-                target={link.href.startsWith("mailto:") ? undefined : "_blank"}
-                rel="noopener noreferrer"
-                className={`flex items-center gap-2 text-emerald-100 transition-colors ${link.color}`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-sm font-medium">{link.label}</span>
-              </a>
-            );
-          })}
+			{footerLinks.map((link) => {
+  			const Icon = link.icon;
+
+  			return (
+   				 <a
+     			    key={link.label}
+      				href={link.href}
+				    target={link.href.startsWith("mailto:") ? undefined : "_blank"}
+				    rel="noopener noreferrer"
+				    className={`flex items-center gap-2 text-emerald-100 transition-colors ${link.color}`}
+    			>
+      		<Icon className="w-5 h-5" />
+   	   		<span className="text-sm font-medium">{link.label}</span>
+    	</a>
+  	   );
+	})}
         </div>
         <div className="border-t border-emerald-700 mt-8 pt-6">
           <p className="text-center text-emerald-300 text-xs">
