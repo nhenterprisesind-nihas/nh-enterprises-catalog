@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
   try {
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       items,
     } = body;
 
-    const { error: orderError } = await supabase
+    const { error: orderError } = await supabaseAdmin
       .from("orders")
       .insert([
         {
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       amount: item.price * item.quantity,
     }));
 
-    const { error: itemError } = await supabase
+    const { error: itemError } = await supabaseAdmin
       .from("order_items")
       .insert(orderItems);
 
