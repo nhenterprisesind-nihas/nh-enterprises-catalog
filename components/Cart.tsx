@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { saveOrder } from "@/lib/orders";
 
 export default function Cart() {
   const {
@@ -39,7 +40,21 @@ export default function Cart() {
     updateQuantity(productName, Math.max(num, minQty));
   };
 
-  const generateWhatsAppMessage = () => {
+  const generateOrderNumber = () => {
+  const now = new Date();
+  const pad = (n: number, len = 2) => String(n).padStart(len, "0");
+  return (
+    "NH" +
+    now.getFullYear() +
+    pad(now.getMonth() + 1) +
+    pad(now.getDate()) +
+    pad(now.getHours()) +
+    pad(now.getMinutes()) +
+    pad(now.getSeconds()) +
+    "0001"
+  );
+};
+  const generateWhatsAppMessage = (orderNo: string) => {
   const now = new Date();
 
   const pad = (n: number, len = 2) => String(n).padStart(len, "0");
@@ -54,20 +69,6 @@ export default function Cart() {
     second: "2-digit",
     hour12: true,
   });
-
-  // Temporary sequence number.
-  // Later we'll replace this with Redis so it increments globally.
-  const sequence = "0001";
-
-  const orderNo =
-    "NH" +
-    now.getFullYear() +
-    pad(now.getMonth() + 1) +
-    pad(now.getDate()) +
-    pad(now.getHours()) +
-    pad(now.getMinutes()) +
-    pad(now.getSeconds()) +
-    sequence;
 
   let message = "";
 
@@ -114,12 +115,59 @@ export default function Cart() {
   return encodeURIComponent(message);
 };
 
-  const handleSubmitOrder = () => {
-    const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919999999999";
-    const message = generateWhatsAppMessage();
-    const url = `https://wa.me/${whatsappNumber}?text=${message}`;
-    window.open(url, "_blank");
-  };
+const handleSubmitOrder = async () => {
+  try {
+    const orderNo = generateOrderNumber();
+
+    await saveOrder({
+      orderNo,
+      customerName,
+      phone: customerPhone,
+      address: customerAddress,
+      pincode: "",
+      subtotal: totalAmount,
+      shipping: 0,
+      grandTotal: totalAmount,
+      items: items.map((item) => ({
+        name: item.product.name,
+        quantity: item.quantity,
+        price: getItemPrice(item),
+      })),
+    });
+
+    const whatsappNumber =
+      process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919999999999";
+
+    const message = generateWhatsAppMessage(orderNo);
+
+    window.open(
+      `https://wa.me/${whatsappNumber}?text=${message}`,
+      "_blank"
+    );
+
+    clearCart();
+
+  } catch (error) {
+    console.error(error);
+    alert("Unable to save your order. Please try again.");
+  }
+};
+  
+  if (!response.ok) {
+    alert("Unable to save your order. Please try again.");
+    return;
+  }
+
+  const whatsappNumber =
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919999999999";
+
+  const message = generateWhatsAppMessage();
+
+  window.open(
+    `https://wa.me/${whatsappNumber}?text=${message}`,
+    "_blank"
+  );
+};
 
   return (
     <>
