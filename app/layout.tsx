@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CartProvider } from "@/context/CartContext";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen font-sans antialiased bg-gray-50">
         <CartProvider>{children}</CartProvider>
+        <Analytics />
       </body>
     </html>
   );
