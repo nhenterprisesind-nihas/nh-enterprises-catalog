@@ -34,19 +34,30 @@ export default function CatalogPage() {
           skipEmptyLines: true,
           complete: (results) => {
             const parsed: Product[] = results.data.map((row: any) => {
-              const images: string[] = [];
-              const hasMultiImages = row.image_url_1 !== undefined;
+            const images: string[] = [];
+						const hasMultiImages = row.image_url_1 !== undefined;
 
-              if (hasMultiImages) {
-                for (let i = 1; i <= 5; i++) {
-                  const url = row[`image_url_${i}`];
-                  if (url && url.trim()) {
-                    images.push(url.trim());
-                  }
-                }
-              } else if (row.image_url && row.image_url.trim()) {
-                images.push(row.image_url.trim());
-              }
+						const isValidImage = (url: string | undefined) => {
+  					if (!url) return false;
+    				const value = url.trim().toUpperCase();
+					  return (
+    								value !== "" &&
+    								value !== "NA" &&
+    								value !== "N/A" &&
+    								value !== "-"
+  								);
+						};
+
+						if (hasMultiImages) {
+  						for (let i = 1; i <= 5; i++) {
+    							const url = row[`image_url_${i}`];
+    									if (isValidImage(url)) {
+      										images.push(url.trim());
+    											}
+  									}
+							} else if (isValidImage(row.image_url)) {
+  									images.push(row.image_url.trim());
+						}
 
               return {
                 name: row.name || "",
