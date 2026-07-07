@@ -111,11 +111,22 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   const isOutOfStock = product.stock <= 0;
+  const discountPercent =
+  product.mrp > product.retail_price
+    ? Math.round(
+        ((product.mrp - product.retail_price) / product.mrp) * 100
+      )
+    : 0;
 
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200">
         <div className="relative w-full h-48 bg-gray-100 overflow-hidden group">
+        {discountPercent > 0 && (
+          <div className="absolute top-2 left-2 z-20 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow">
+            {discountPercent}% OFF
+        </div>
+       )}
           {images.length > 0 ? (
             <>
               <div
