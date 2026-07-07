@@ -152,22 +152,6 @@ const handleSubmitOrder = async () => {
     alert("Unable to save your order. Please try again.");
   }
 };
-  
-  if (!response.ok) {
-    alert("Unable to save your order. Please try again.");
-    return;
-  }
-
-  const whatsappNumber =
-    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919999999999";
-
-  const message = generateWhatsAppMessage();
-
-  window.open(
-    `https://wa.me/${whatsappNumber}?text=${message}`,
-    "_blank"
-  );
-};
 
   return (
     <>
