@@ -47,7 +47,7 @@ const footerLinks = [
   },
   {
     label: "Join our WhatsApp Group",
-    href: "https://chat.whatsapp.com/invite-link",
+    href: "https://chat.whatsapp.com/JfALSlcxJJlExgWDY8hmtX",
     icon: MessageCircleIcon,
     color: "hover:text-green-400",
   },
