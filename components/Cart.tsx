@@ -40,36 +40,79 @@ export default function Cart() {
   };
 
   const generateWhatsAppMessage = () => {
-    let message = "🛒 *New Order — Nikshas Collections*\n\n";
+  const now = new Date();
 
-    if (customerName || customerPhone || customerAddress) {
-      message += "📋 *Customer Details:*\n";
-      if (customerName) message += `Name: ${customerName}\n`;
-      if (customerPhone) message += `Phone: ${customerPhone}\n`;
-      if (customerAddress) message += `Address: ${customerAddress}\n`;
-      message += "\n";
-    }
+  const pad = (n: number, len = 2) => String(n).padStart(len, "0");
 
-    message += "━━━━━━━━━━━━━━━━━━\n";
+  const orderDate = `${pad(now.getDate())}-${now.toLocaleString("en-IN", {
+    month: "short",
+  })}-${now.getFullYear()}`;
 
-    items.forEach((item, index) => {
-      const price = getItemPrice(item);
-      const subtotal = price * item.quantity;
-      message += `${index + 1}. *${item.product.name}*\n`;
-      message += `   Qty: ${item.quantity} × ₹${price.toLocaleString("en-IN")} (${item.priceType})\n`;
-      if (item.priceType === "wholesale") {
-        message += `   MOQ: 10 units\n`;
-      }
-      message += `   Subtotal: ₹${subtotal.toLocaleString("en-IN")}\n\n`;
-    });
+  const orderTime = now.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
 
-    message += "━━━━━━━━━━━━━━━━━━\n";
-    message += `*Total Items:* ${totalItems}\n`;
-    message += `*Grand Total:* ₹${totalAmount.toLocaleString("en-IN")}\n\n`;
-    message += "Please confirm availability and delivery details. 🙏";
+  // Temporary sequence number.
+  // Later we'll replace this with Redis so it increments globally.
+  const sequence = "0001";
 
-    return encodeURIComponent(message);
-  };
+  const orderNo =
+    "NH" +
+    now.getFullYear() +
+    pad(now.getMonth() + 1) +
+    pad(now.getDate()) +
+    pad(now.getHours()) +
+    pad(now.getMinutes()) +
+    pad(now.getSeconds()) +
+    sequence;
+
+  let message = "";
+
+  message += "🛍️ *NH ENTERPRISES*\n";
+  message += "══════════════════════\n";
+  message += "*ORDER REQUEST*\n";
+  message += "══════════════════════\n\n";
+
+  message += `*Order No* : ${orderNo}\n`;
+  message += `*Order Date* : ${orderDate}\n`;
+  message += `*Order Time* : ${orderTime}\n\n`;
+
+  message += "📦 *ITEMS ORDERED*\n";
+  message += "-----------------------------------------\n";
+  message += "Sl | Product | Qty | Amount\n";
+  message += "-----------------------------------------\n";
+
+  items.forEach((item, index) => {
+    const price = getItemPrice(item);
+    const amount = price * item.quantity;
+
+    message += `${index + 1}. ${item.product.name}\n`;
+    message += `    Qty: ${item.quantity}    Amount: ₹${amount.toLocaleString(
+      "en-IN"
+    )}\n`;
+  });
+
+  message += "-----------------------------------------\n";
+  message += `*TOTAL BILL VALUE : ₹${totalAmount.toLocaleString("en-IN")}*\n\n`;
+
+  message += "👤 *CUSTOMER DETAILS*\n";
+  message += `Name : ${customerName || ""}\n`;
+  message += `Mobile : ${customerPhone || ""}\n`;
+  message += `Address : ${customerAddress || ""}\n\n`;
+
+  message += "📝 *NOTE*\n";
+  message +=
+    "• Shipping charges are extra and will be calculated based on delivery location, package size and package weight.\n";
+  message +=
+    "• Final order value will be confirmed before dispatch.\n\n";
+
+  message += "Thank you for choosing *NH ENTERPRISES* 🙏";
+
+  return encodeURIComponent(message);
+};
 
   const handleSubmitOrder = () => {
     const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919999999999";
