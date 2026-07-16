@@ -21,21 +21,25 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const { error } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    const { data, error } =
+  await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    setLoading(false);
+console.log("SIGN IN RESULT:", data);
+console.log("CURRENT SESSION:", await supabase.auth.getSession());
 
-    if (error) {
-      setError(error.message);
-      return;
-    }
+setLoading(false);
 
-    router.push("/admin/orders");
-    router.refresh();
+if (error) {
+  setError(error.message);
+  return;
+}
+
+alert("Login Successful");
+
+router.push("/admin/orders");
   }
 
   return (
