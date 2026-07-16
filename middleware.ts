@@ -2,8 +2,6 @@ import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  console.log("Middleware:", request.nextUrl.pathname);
-
   let response = NextResponse.next();
 
   const supabase = createServerClient(
@@ -35,23 +33,18 @@ export async function middleware(request: NextRequest) {
 
   const {
     data: { user },
-    error,
   } = await supabase.auth.getUser();
-
-  if (error) {
-    console.error("Supabase Auth Error:", error.message);
-  }
 
   const pathname = request.nextUrl.pathname;
 
-  // Allow login page
-  if (pathname === "/admin/login") {
+  // Allow public login page
+  if (pathname === "/login") {
     return response;
   }
 
   // Protect all admin routes
   if (pathname.startsWith("/admin") && !user) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return response;
