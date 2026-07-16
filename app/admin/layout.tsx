@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import LogoutButton from "@/components/LogoutButton";
 
 export default function AdminLayout({
   children,
@@ -45,8 +46,11 @@ export default function AdminLayout({
 
         </nav>
 
-        <div className="border-t border-slate-700 p-4 text-xs text-slate-400">
-          NH OMS v1.0
+        <div className="border-t border-slate-700 p-4 space-y-4">
+            <LogoutButton />
+                <div className="text-xs text-slate-400">
+                  NH OMS v1.0
+                </div>\
         </div>
       </aside>
 
