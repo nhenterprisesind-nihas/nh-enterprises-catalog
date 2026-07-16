@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(
   request: NextRequest,
@@ -36,10 +38,19 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({
-      order,
-      items,
-    });
+  console.log("ORDER DETAILS:", orderNo, order?.status);
+  
+    return NextResponse.json(
+  {
+    order,
+    items,
+  },
+  {
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
+  }
+);
   } catch (error) {
     console.error(error);
 
