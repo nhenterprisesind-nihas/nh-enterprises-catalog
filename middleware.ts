@@ -1,7 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  console.log("Middleware:", request.nextUrl.pathname);
+
   let response = NextResponse.next();
 
   const supabase = createServerClient(
@@ -32,19 +34,23 @@ export async function middleware(request: NextRequest) {
   );
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
-  const isAdminPage = request.nextUrl.pathname.startsWith("/admin");
+  if (error) {
+    console.error("Supabase Auth Error:", error.message);
+  }
 
-  // Allow login page without authentication
-  if (isLoginPage) {
+  const pathname = request.nextUrl.pathname;
+
+  // Allow login page
+  if (pathname === "/admin/login") {
     return response;
   }
 
-  // Protect all other admin pages
-  if (isAdminPage && !session) {
+  // Protect all admin routes
+  if (pathname.startsWith("/admin") && !user) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
