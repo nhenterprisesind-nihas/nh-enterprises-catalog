@@ -157,6 +157,8 @@ export default function OrderDetailsPage({
                   ? "bg-blue-100 text-blue-800"
                   : order.status === "Dispatched"
                   ? "bg-orange-100 text-orange-800"
+                  : order.status === "Cancelled"
+                  ? "bg-red-100 text-red-800"
                   : "bg-green-100 text-green-800"
               }`}
             >
@@ -166,14 +168,30 @@ export default function OrderDetailsPage({
             <div className="mt-4">
 
               {order.status === "Placed" && (
-                <button
-                  onClick={() => updateStatus("Accepted")}
-                  disabled={updating}
-                  className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                >
-                  {updating ? "Updating..." : "Accept Order"}
-                </button>
-              )}
+                  <div className="flex gap-3">
+
+                    <button
+                      onClick={() => updateStatus("Accepted")}
+                      disabled={updating}
+                      className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                    >
+                      {updating ? "Updating..." : "Accept Order"}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (confirm("Are you sure you want to cancel this order?")) {
+                          updateStatus("Cancelled");
+                        }
+                      }}
+                      disabled={updating}
+                      className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                    >
+                      {updating ? "Updating..." : "Cancel Order"}
+                    </button>
+
+                  </div>
+                )}
 
               {order.status === "Accepted" && (
                 <button
@@ -195,9 +213,9 @@ export default function OrderDetailsPage({
                 </button>
               )}
 
-              {order.status === "Closed" && (
-                <div className="rounded bg-green-100 px-4 py-2 font-semibold text-green-700">
-                  ✓ Order Completed
+              {order.status === "Cancelled" && (
+                <div className="rounded bg-red-100 px-4 py-2 font-semibold text-red-700">
+                  ✕ Order Cancelled
                 </div>
               )}
 

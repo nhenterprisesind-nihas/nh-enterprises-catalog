@@ -10,6 +10,7 @@ export async function PATCH(request: NextRequest) {
       "Accepted",
       "Dispatched",
       "Closed",
+      "Cancelled",
     ];
 
     if (!allowedStatus.includes(status)) {
@@ -33,13 +34,14 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const workflow: Record<string, string> = {
-      Placed: "Accepted",
-      Accepted: "Dispatched",
-      Dispatched: "Closed",
+    const workflow: Record<string, string[]> = {
+          Placed: ["Accepted", "Cancelled"],
+          Accepted: ["Dispatched"],
+          Dispatched: ["Closed"],
     };
 
-    if (workflow[currentOrder.status] !== status) {
+    const allowedNext = workflow[currentOrder.status] || [];
+    if (!allowedNext.includes(status)) {
       return NextResponse.json(
         {
           error: `Invalid workflow transition from ${currentOrder.status} to ${status}`,
