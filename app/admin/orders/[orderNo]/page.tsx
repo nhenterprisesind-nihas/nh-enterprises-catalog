@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react"; 
+import { useEffect, useState } from "react";
 
 interface Order {
   order_no: string;
@@ -32,8 +32,7 @@ export default function OrderDetailsPage({
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const [cancelReason, setCancelReason] = useState("Customer Cancelled");
-  const [returnReason, setReturnReason] = useState("Damaged Product");
+
   useEffect(() => {
     loadOrder();
   }, []);
@@ -41,14 +40,18 @@ export default function OrderDetailsPage({
   async function loadOrder() {
     try {
       const response = await fetch(
-  `/api/order-details/${params.orderNo}`,
-  {
-    cache: "no-store",
-  }
-);
+        `/api/order-details/${params.orderNo}`,
+        {
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Unable to load order.");
+      }
+
       const data = await response.json();
 
-      console.log("API returned status:", data.order.status);
       setOrder(data.order);
       setItems(data.items);
     } catch (error) {
@@ -58,51 +61,44 @@ export default function OrderDetailsPage({
     }
   }
 
-    async function updateStatus(
-    newStatus: string,
-    reason?: string
-    ) {
+  async function updateStatus(newStatus: string) {
     try {
-    setUpdating(true);
+      setUpdating(true);
 
-    const response = await fetch("/api/order-status", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        orderNo: order?.order_no,
-        status: newStatus,
-        reason,
-      }),
-    });
+      const response = await fetch("/api/order-status", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderNo: order?.order_no,
+          status: newStatus,
+        }),
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-      throw new Error(result.error || "Failed to update order.");
+        throw new Error(result.error || "Unable to update order.");
       }
 
-    const refreshed = await fetch(`/api/order-details/${params.orderNo}`);
-    const refreshedData = await refreshed.json();
+      setOrder(result.order);
 
-      setOrder(refreshedData.order);
-      setItems(refreshedData.items);
       setSuccessMessage(`Order ${newStatus} successfully.`);
 
       setTimeout(() => {
-      setSuccessMessage("");
+        setSuccessMessage("");
       }, 2000);
 
     } catch (error) {
       console.error(error);
-      alert("Unable to update order status.");
+      alert("Unable to update order.");
     } finally {
       setUpdating(false);
     }
   }
-
-  if (loading) {
+  
+    if (loading) {
     return <div className="text-xl">Loading...</div>;
   }
 
@@ -110,214 +106,170 @@ export default function OrderDetailsPage({
     return <div className="text-xl">Order not found.</div>;
   }
 
-  function getBadgeClass(status: string) {
-  switch (status) {
-    case "Placed":
-      return "bg-yellow-100 text-yellow-800";
-
-    case "Accepted":
-      return "bg-blue-100 text-blue-800";
-
-    case "Shipped":
-      return "bg-orange-100 text-orange-800";
-
-    case "Delivered":
-      return "bg-indigo-100 text-indigo-800";
-
-    case "Returned":
-      return "bg-red-100 text-red-800";
-
-    case "Cancelled":
-      return "bg-gray-200 text-gray-800";
-
-    case "Closed":
-      return "bg-green-100 text-green-800";
-
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
-}
-
-function isCompleted() {
-  return (
-    order?.status === "Closed" ||
-    order?.status === "Cancelled" ||
-    order?.status === "Returned"
-  );
-}
-
   return (
     <div className="space-y-8">
       <div className="bg-white rounded-xl shadow p-6">
+
         <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">
+            Order {order.order_no}
+          </h1>
 
-  <h1 className="text-3xl font-bold">
-    Order {order.order_no}
-  </h1>
-
-  <button
-    onClick={() => window.history.back()}
-    className="rounded bg-slate-700 text-white px-4 py-2 hover:bg-slate-800"
-  >
-    ← Back to Orders
-  </button>
-
-</div>
+          <button
+            onClick={() => window.history.back()}
+            className="rounded bg-slate-700 px-4 py-2 text-white hover:bg-slate-800"
+          >
+            ← Back to Orders
+          </button>
+        </div>
 
         {successMessage && (
-        <div className="mt-4 rounded-lg bg-green-100 border border-green-300 text-green-800 px-4 py-3">
-        ✅    {successMessage}
-        </div>
-      )}
+          <div className="mt-4 rounded-lg border border-green-300 bg-green-100 px-4 py-3 text-green-800">
+            ✅ {successMessage}
+          </div>
+        )}
 
-        <div className="grid grid-cols-2 gap-6 mt-6">
+        <div className="mt-6 grid grid-cols-2 gap-6">
+
           <div>
-            <p><strong>Customer</strong></p>
+            <p className="font-semibold">Customer</p>
             <p>{order.customer_name}</p>
           </div>
 
           <div>
-            <p><strong>Phone</strong></p>
+            <p className="font-semibold">Phone</p>
             <p>{order.phone}</p>
           </div>
 
           <div>
-            <p><strong>Address</strong></p>
+            <p className="font-semibold">Address</p>
             <p>{order.address}</p>
           </div>
 
           <div>
-  <p><strong>Status</strong></p>
+            <p className="font-semibold mb-2">Status</p>
 
-  <div className="mt-3 space-y-4">
-      <div className="mt-2 space-y-3">
+            <span
+              className={`inline-block rounded-full px-3 py-1 text-sm font-semibold ${
+                order.status === "Placed"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : order.status === "Accepted"
+                  ? "bg-blue-100 text-blue-800"
+                  : order.status === "Dispatched"
+                  ? "bg-orange-100 text-orange-800"
+                  : "bg-green-100 text-green-800"
+              }`}
+            >
+              {order.status}
+            </span>
 
-  <span
-    className={`inline-block rounded-full px-3 py-1 text-sm font-semibold
-      ${
-        order.status === "Placed"
-          ? "bg-yellow-100 text-yellow-800"
-          : order.status === "Accepted"
-          ? "bg-blue-100 text-blue-800"
-          : order.status === "Dispatched"
-          ? "bg-orange-100 text-orange-800"
-          : "bg-green-100 text-green-800"
-      }`}
-  >
-    {order.status}
-  </span>
+            <div className="mt-4">
 
-  {order.status === "Placed" && (
-    <button
-      onClick={() => updateStatus("Accepted")}
-      disabled={updating}
-      className="block w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-    >
-      {updating ? "Updating..." : "Accept Order"}
-    </button>
-  )}
+              {order.status === "Placed" && (
+                <button
+                  onClick={() => updateStatus("Accepted")}
+                  disabled={updating}
+                  className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                >
+                  {updating ? "Updating..." : "Accept Order"}
+                </button>
+              )}
 
-  {order.status === "Accepted" && (
-    <button
-      onClick={() => updateStatus("Dispatched")}
-      disabled={updating}
-      className="block w-full rounded bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
-    >
-      {updating ? "Updating..." : "Dispatch Order"}
-    </button>
-  )}
+              {order.status === "Accepted" && (
+                <button
+                  onClick={() => updateStatus("Dispatched")}
+                  disabled={updating}
+                  className="rounded bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
+                >
+                  {updating ? "Updating..." : "Dispatch Order"}
+                </button>
+              )}
 
-  {order.status === "Dispatched" && (
-    <button
-      onClick={() => updateStatus("Closed")}
-      disabled={updating}
-      className="block w-full rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
-    >
-      {updating ? "Updating..." : "Close Order"}
-    </button>
-  )}
+              {order.status === "Dispatched" && (
+                <button
+                  onClick={() => updateStatus("Closed")}
+                  disabled={updating}
+                  className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                >
+                  {updating ? "Updating..." : "Close Order"}
+                </button>
+              )}
 
-  {order.status === "Closed" && (
-    <div className="rounded bg-green-100 px-4 py-2 text-green-700 font-semibold">
-      ✓ Order Completed
-    </div>
-  )}
-  </div>
-</div>
+              {order.status === "Closed" && (
+                <div className="rounded bg-green-100 px-4 py-2 font-semibold text-green-700">
+                  ✓ Order Completed
+                </div>
+              )}
+
+            </div>
+
+          </div>
+
         </div>
+
       </div>
 
-      <div className="bg-white rounded-xl shadow overflow-hidden">
+      <div className="overflow-hidden rounded-xl bg-white shadow">
+
         <table className="w-full">
           <thead className="bg-slate-100">
             <tr>
-              <th className="text-left px-5 py-4">Product</th>
-              <th className="text-center px-5 py-4">Qty</th>
-              <th className="text-right px-5 py-4">Price</th>
-              <th className="text-right px-5 py-4">Amount</th>
+              <th className="px-5 py-4 text-left">Product</th>
+              <th className="px-5 py-4 text-center">Qty</th>
+              <th className="px-5 py-4 text-right">Price</th>
+              <th className="px-5 py-4 text-right">Amount</th>
             </tr>
           </thead>
 
           <tbody>
-            {items.map((item, index) => (
+
+              {items.map((item, index) => (
               <tr key={index} className="border-t">
                 <td className="px-5 py-4">
                   {item.product_name}
                 </td>
 
-                <td className="text-center px-5 py-4">
+                <td className="px-5 py-4 text-center">
                   {item.quantity}
                 </td>
 
-                <td className="text-right px-5 py-4">
-                  ₹{item.price}
+                <td className="px-5 py-4 text-right">
+                  ₹{Number(item.price).toLocaleString("en-IN")}
                 </td>
 
-                <td className="text-right px-5 py-4 font-semibold">
-                  ₹{item.amount}
+                <td className="px-5 py-4 text-right font-semibold">
+                  ₹{Number(item.amount).toLocaleString("en-IN")}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        <div className="p-6 border-t space-y-2">
+        <div className="space-y-2 border-t p-6">
+
           <div className="flex justify-between">
             <span>Subtotal</span>
-            <span>₹{order.subtotal}</span>
+            <span>
+              ₹{Number(order.subtotal).toLocaleString("en-IN")}
+            </span>
           </div>
 
           <div className="flex justify-between">
             <span>Shipping</span>
-            <span>₹{order.shipping}</span>
+            <span>
+              ₹{Number(order.shipping).toLocaleString("en-IN")}
+            </span>
           </div>
 
           <div className="flex justify-between text-xl font-bold">
             <span>Grand Total</span>
-            <span>₹{order.grand_total}</span>
+            <span>
+              ₹{Number(order.grand_total).toLocaleString("en-IN")}
+            </span>
           </div>
-          {order.cancel_reason && (
-  <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3">
-    <p className="font-semibold text-red-700">
-      Cancellation Reason
-    </p>
-    <p className="text-red-600">
-      {order.cancel_reason}
-    </p>
-  </div>
-)}
 
-{order.return_reason && (
-  <div className="mt-4 rounded-lg bg-orange-50 border border-orange-200 p-3">
-    <p className="font-semibold text-orange-700">
-      Return Reason
-    </p>
-    <p className="text-orange-600">
-      {order.return_reason}
-    </p>
-  </div>
-)}
         </div>
+
       </div>
     </div>
   );
