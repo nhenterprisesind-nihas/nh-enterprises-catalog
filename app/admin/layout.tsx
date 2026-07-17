@@ -1,25 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { redirect } from "next/navigation";
-
 import LogoutButton from "@/components/LogoutButton";
-import { createClient } from "@/lib/supabase-server";
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
   return (
     <div className="min-h-screen bg-slate-100 flex">
       {/* Sidebar */}
@@ -59,13 +46,13 @@ export default async function AdminLayout({
 
         <div className="border-t border-slate-700 p-4 space-y-4">
           <LogoutButton />
-
           <div className="text-xs text-slate-400">
             NH OMS v1.0
           </div>
         </div>
       </aside>
 
+      {/* Content */}
       <main className="flex-1 p-8 overflow-auto">
         {children}
       </main>
