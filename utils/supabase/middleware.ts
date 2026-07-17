@@ -32,8 +32,22 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh the auth session
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const pathname = request.nextUrl.pathname;
+
+  const isLoginPage = pathname === "/login";
+  const isAdminRoute = pathname.startsWith("/admin");
+
+  if (!user && isAdminRoute) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (user && isLoginPage) {
+    return NextResponse.redirect(new URL("/admin/orders", request.url));
+  }
 
   return response;
 }

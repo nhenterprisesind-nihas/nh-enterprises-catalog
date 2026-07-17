@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -11,7 +11,25 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function checkSession() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        router.replace("/admin/orders");
+        return;
+      }
+
+      setCheckingSession(false);
+    }
+
+    checkSession();
+  }, [router]);
 
   async function handleLogin(
     e: React.FormEvent<HTMLFormElement>
@@ -21,35 +39,38 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const { data, error } =
-  await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-console.log("SIGN IN RESULT:", data);
-console.log("CURRENT SESSION:", await supabase.auth.getSession());
+    if (error) {
+      setLoading(false);
+      setError(error.message);
+      return;
+    }
 
-setLoading(false);
+    await supabase.auth.getSession();
 
-if (error) {
-  setError(error.message);
-  return;
-}
+    router.replace("/admin/orders");
 
-alert("Login Successful");
+    router.refresh();
+  }
 
-router.push("/admin/orders");
+  if (checkingSession) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-100">
+        <p className="text-slate-500">Checking session...</p>
+      </div>
+    );
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100">
-
       <form
         onSubmit={handleLogin}
         className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg"
       >
-
         <h1 className="mb-2 text-center text-3xl font-bold">
           NH ENTERPRISES
         </h1>
@@ -71,12 +92,10 @@ router.push("/admin/orders");
 
           <input
             type="email"
-            value={email}
-            onChange={(e) =>
-              setEmail(e.target.value)
-            }
-            className="w-full rounded border p-3"
             required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded border p-3"
           />
         </div>
 
@@ -87,25 +106,21 @@ router.push("/admin/orders");
 
           <input
             type="password"
-            value={password}
-            onChange={(e) =>
-              setPassword(e.target.value)
-            }
-            className="w-full rounded border p-3"
             required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full rounded border p-3"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700"
+          className="w-full rounded bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? "Signing In..." : "Login"}
         </button>
-
       </form>
-
     </div>
   );
 }
