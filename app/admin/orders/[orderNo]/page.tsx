@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface Order {
   order_no: string;
@@ -22,11 +23,14 @@ interface OrderItem {
   amount: number;
 }
 
+import { use } from "react";
+
 export default function OrderDetailsPage({
   params,
 }: {
-  params: { orderNo: string };
+  params: Promise<{ orderNo: string }>;
 }) {
+  const { orderNo } = use(params);
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +44,7 @@ export default function OrderDetailsPage({
   async function loadOrder() {
     try {
       const response = await fetch(
-        `/api/order-details/${params.orderNo}`,
+        `/api/order-details/${orderNo}`,
         {
           cache: "no-store",
         }
@@ -111,16 +115,31 @@ export default function OrderDetailsPage({
       <div className="bg-white rounded-xl shadow p-6">
 
         <div className="flex items-center justify-between">
+
           <h1 className="text-3xl font-bold">
             Order {order.order_no}
           </h1>
 
-          <button
-            onClick={() => window.history.back()}
-            className="rounded bg-slate-700 px-4 py-2 text-white hover:bg-slate-800"
+          <div className="flex gap-3">
+
+          <Link
+            href={`/api/invoice/${order.order_no}`}
+            target="_blank"
+            prefetch={false}
+            className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
           >
-            ← Back to Orders
-          </button>
+            📄 Download Invoice
+          </Link>
+
+            <button
+              onClick={() => window.history.back()}
+              className="rounded bg-slate-700 px-4 py-2 text-white hover:bg-slate-800"
+            >
+              ← Back to Orders
+            </button>
+
+          </div>
+
         </div>
 
         {successMessage && (

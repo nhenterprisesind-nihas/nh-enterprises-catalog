@@ -1,12 +1,31 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { headers } from "next/headers";
 import LogoutButton from "@/components/LogoutButton";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const headersList = await headers();
+  const pathname =
+    headersList.get("x-next-pathname") ||
+    headersList.get("next-url") ||
+    "";
+
+  const isDashboard = pathname === "/admin";
+  const isOrders = pathname.startsWith("/admin/orders");
+  const isInvoice = pathname.includes("/invoice");
+
+  if (isInvoice) {
+    return (
+      <main className="min-h-screen bg-white p-8">
+        {children}
+      </main>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 flex">
       {/* Sidebar */}
@@ -23,17 +42,25 @@ export default function AdminLayout({
 
         <nav className="flex-1 p-4 space-y-2">
           <Link
-            href="/admin/orders"
-            className="block rounded-lg px-4 py-3 hover:bg-slate-800 transition"
+            href="/admin"
+            className={`block rounded-lg px-4 py-3 transition ${
+              isDashboard
+                ? "bg-blue-600 text-white"
+                : "hover:bg-slate-800"
+            }`}
           >
-            📦 Orders
+            📊 Dashboard
           </Link>
 
           <Link
-            href="#"
-            className="block rounded-lg px-4 py-3 text-slate-500 cursor-not-allowed"
+            href="/admin/orders"
+            className={`block rounded-lg px-4 py-3 transition ${
+              isOrders
+                ? "bg-blue-600 text-white"
+                : "hover:bg-slate-800"
+            }`}
           >
-            📊 Dashboard
+            📦 Orders
           </Link>
 
           <Link
@@ -46,6 +73,7 @@ export default function AdminLayout({
 
         <div className="border-t border-slate-700 p-4 space-y-4">
           <LogoutButton />
+
           <div className="text-xs text-slate-400">
             NH OMS v1.0
           </div>

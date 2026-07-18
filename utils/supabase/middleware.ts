@@ -32,9 +32,19 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  let user = null;
+
+try {
   const {
-    data: { user },
+    data: { user: authUser },
   } = await supabase.auth.getUser();
+
+  user = authUser;
+} catch (error) {
+  user = null;
+  response.cookies.delete("sb-access-token");
+  response.cookies.delete("sb-refresh-token");
+}
 
   const pathname = request.nextUrl.pathname;
 

@@ -9,17 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.53.0",
-    "next": "^14.2.0",
+    "exceljs": "^3.4.0",
+    "next": "^16.2.10",
     "papaparse": "^5.4.1",
+    "pdfkit": "^0.19.1",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "redis": "^5.8.2"
+    "redis": "^5.8.2",
+    "svg-to-pdfkit": "^0.1.8"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/papaparse": "^5.3.14",
+    "@types/pdfkit": "^0.17.6",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "autoprefixer": "^10.4.17",

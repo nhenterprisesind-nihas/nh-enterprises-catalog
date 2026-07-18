@@ -5,10 +5,10 @@ export const revalidate = 0;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orderNo: string } }
+  { params }: { params: Promise<{ orderNo: string }> }
 ) {
   try {
-    const orderNo = params.orderNo;
+    const {orderNo} = await params;
 
     // Get Order Header
     const { data: order, error: orderError } = await supabaseAdmin
