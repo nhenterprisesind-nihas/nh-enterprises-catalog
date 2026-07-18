@@ -9,7 +9,7 @@ export interface Product {
   mrp: number;
   retail_price: number;
   wholesale_price: number;
-  image_url: string;
+  images: string[];
   stock: number;
 }
 
