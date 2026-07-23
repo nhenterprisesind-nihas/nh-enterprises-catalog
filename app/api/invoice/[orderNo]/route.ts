@@ -150,6 +150,10 @@ export async function GET(
       align: "center",
     });
 
+  //  doc.text("GSTIN : 33BETPD3982A1ZM", {
+  //  align: "center",
+  //  });
+
     doc.text("Email : nhenterprisesind@gmail.com", {
       align: "center",
     });
@@ -163,7 +167,7 @@ export async function GET(
     doc.font("Helvetica-Bold");
     doc.fontSize(18);
 
-    doc.text("TAX INVOICE", {
+    doc.text("BILL OF SUPPLY", {
       align: "center",
     });
 
