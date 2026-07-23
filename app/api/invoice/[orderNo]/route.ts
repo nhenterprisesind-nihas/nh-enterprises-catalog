@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import PDFDocument from "pdfkit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -197,8 +198,6 @@ export async function GET(
     doc.text(order.address ?? "-");
 
     doc.text(`Phone : ${order.phone ?? "-"}`);
-
-    doc.text(`Pincode : ${order.pincode ?? "-"}`);
 
     // =============================
     // INVOICE DETAILS
@@ -479,30 +478,49 @@ export async function GET(
 
     drawBox(doc, signLeft, footerY - 5, 180, 70);
 
-    doc.font("Helvetica-Bold");
-    doc.fontSize(10);
+const signatureFont = path.join(
+  process.cwd(),
+  "fonts",
+  "GreatVibes-Regular.ttf"
+);
 
-    doc.text(
-      "For NH ENTERPRISES",
-      signLeft,
-      footerY + 8,
-      {
-        width: 180,
-        align: "center",
-      }
-    );
+doc.font(signatureFont);
+doc.fontSize(22);
 
-    doc.font("Helvetica");
+doc.text(
+  "Dillyrani",
+  signLeft,
+  footerY + 8,
+  {
+    width: 180,
+    align: "center",
+  }
+);
 
-    doc.text(
-      "Authorized Signatory",
-      signLeft,
-      footerY + 50,
-      {
-        width: 180,
-        align: "center",
-      }
-    );
+doc.font("Helvetica");
+doc.fontSize(10);
+
+doc.text(
+  "Authorized Signatory",
+  signLeft,
+  footerY + 42,
+  {
+    width: 180,
+    align: "center",
+  }
+);
+
+doc.font("Helvetica-Bold");
+
+doc.text(
+  "NH ENTERPRISES",
+  signLeft,
+  footerY + 56,
+  {
+    width: 180,
+    align: "center",
+  }
+);
 
     // ==================================================
     // PAGE NUMBERS
