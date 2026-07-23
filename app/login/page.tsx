@@ -21,7 +21,7 @@ export default function LoginPage() {
       } = await supabase.auth.getSession();
 
       if (session) {
-        router.replace("/admin/orders");
+        router.replace("/admin");
         return;
       }
 
@@ -52,7 +52,7 @@ export default function LoginPage() {
 
     await supabase.auth.getSession();
 
-    router.replace("/admin/orders");
+    router.replace("/admin");
 
     router.refresh();
   }
