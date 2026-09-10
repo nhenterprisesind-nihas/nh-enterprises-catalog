@@ -29,11 +29,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const payload = await request.json().catch(() => null);
+  const entryCount = Array.isArray(payload?.entry) ? payload.entry.length : 0;
 
-  console.info(
-    "WhatsApp webhook payload:",
-    JSON.stringify(payload, null, 2),
-  );
+  console.info("WhatsApp webhook received.", {
+    object: payload?.object,
+    entryCount,
+  });
 
   return NextResponse.json({ received: true }, { status: 200 });
 }
