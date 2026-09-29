@@ -49,35 +49,6 @@ export default function TestimonialsPage() {
             We value every customer experience and will share verified feedback here.
           </p>
         </div>
-
-        <section className="mx-auto mt-10 max-w-2xl" aria-label="Sample testimonial">
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex" aria-label="5 out of 5 stars">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <StarIcon key={star} />
-                ))}
-              </div>
-              <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-                Sample testimonial
-              </span>
-            </div>
-
-            <blockquote className="mt-6 text-lg leading-8 text-gray-700">
-              “The Jumkhas were even more beautiful in person. They felt light to wear,
-              looked elegant, and arrived neatly packed—perfect for a festive outfit.”
-            </blockquote>
-
-            <div className="mt-6 border-t border-gray-100 pt-5">
-              <p className="font-semibold text-gray-900">Sample customer feedback</p>
-              <p className="mt-1 text-sm text-gray-500">Jumkhas product</p>
-            </div>
-          </article>
-
-          <p className="mt-4 text-center text-sm text-gray-500">
-            This is illustrative placeholder copy and is not a verified customer review.
-          </p>
-        </section>
         <TestimonialsList />
       </main>
 
