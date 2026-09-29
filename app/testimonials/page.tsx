@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import TestimonialsList from "@/components/TestimonialsList";
 
 export const metadata: Metadata = {
   title: "Testimonials | Nikshas Collections",
@@ -77,6 +78,7 @@ export default function TestimonialsPage() {
             This is illustrative placeholder copy and is not a verified customer review.
           </p>
         </section>
+        <TestimonialsList />
       </main>
 
       <Footer />

@@ -16,6 +16,7 @@ export default async function AdminLayout({
 
   const isDashboard = pathname === "/admin";
   const isOrders = pathname.startsWith("/admin/orders");
+  const isTestimonials = pathname.startsWith("/admin/testimonials");
   const isInvoice = pathname.includes("/invoice");
 
   if (isInvoice) {
@@ -61,6 +62,17 @@ export default async function AdminLayout({
             }`}
           >
             📦 Orders
+          </Link>
+
+          <Link
+            href="/admin/testimonials"
+            className={`block rounded-lg px-4 py-3 transition ${
+              isTestimonials
+                ? "bg-blue-600 text-white"
+                : "hover:bg-slate-800"
+            }`}
+          >
+            💬 Testimonials
           </Link>
 
           <Link

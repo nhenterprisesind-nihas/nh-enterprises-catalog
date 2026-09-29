@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import VisitorCounter from "./VisitorCounter";
 
 function InstagramIcon({ className }: { className?: string }) {
@@ -76,6 +77,12 @@ export default function Footer() {
           <p className="text-emerald-200 text-sm mt-1">
             Quality products at retail & wholesale pricing
           </p>
+          <Link
+            href="/testimonials"
+            className="mt-4 inline-flex rounded-lg border border-emerald-400 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800"
+          >
+            Read customer feedback
+          </Link>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-6">
 			{footerLinks.map((link) => {
