@@ -30,6 +30,7 @@ export default function OrderDetailsPage({
   params: Promise<{ orderNo: string }>;
 }) {
   const { orderNo } = use(params);
+
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,18 +116,31 @@ export default function OrderDetailsPage({
 
   return (
     <div className="space-y-8">
+      {/* ================================
+          ORDER HEADER
+      ================================= */}
+
       <div className="rounded-xl bg-white p-6 shadow">
         <div className="flex items-center justify-between">
+
           <h1 className="text-3xl font-bold">
             Order {order.order_no}
           </h1>
 
           <div className="flex gap-3">
+
+            {/* ================================
+                DOWNLOAD MENU
+            ================================= */}
+
             <div className="relative">
+
               <button
                 type="button"
                 onClick={() =>
-                  setDownloadOpen((current) => !current)
+                  setDownloadOpen(
+                    (current) => !current
+                  )
                 }
                 className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
               >
@@ -135,37 +149,57 @@ export default function OrderDetailsPage({
 
               {downloadOpen && (
                 <div className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+
+                  {/* Bill of Supply */}
+
                   <Link
                     href={`/api/invoice/${order.order_no}`}
                     target="_blank"
                     prefetch={false}
-                    onClick={() => setDownloadOpen(false)}
+                    onClick={() =>
+                      setDownloadOpen(false)
+                    }
                     className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     📄 Bill of Supply
                   </Link>
 
+                  {/* GST Invoice */}
+
                   <Link
                     href={`/api/gst-invoice/${order.order_no}`}
                     target="_blank"
                     prefetch={false}
-                    onClick={() => setDownloadOpen(false)}
+                    onClick={() =>
+                      setDownloadOpen(false)
+                    }
                     className="block border-t border-gray-100 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     🧾 GST Invoice
                   </Link>
+
                 </div>
               )}
+
             </div>
 
+            {/* Back Button */}
+
             <button
-              onClick={() => window.history.back()}
+              onClick={() =>
+                window.history.back()
+              }
               className="rounded bg-slate-700 px-4 py-2 text-white hover:bg-slate-800"
             >
               ← Back to Orders
             </button>
+
           </div>
         </div>
+
+        {/* ================================
+            SUCCESS MESSAGE
+        ================================= */}
 
         {successMessage && (
           <div className="mt-4 rounded-lg border border-green-300 bg-green-100 px-4 py-3 text-green-800">
@@ -173,24 +207,38 @@ export default function OrderDetailsPage({
           </div>
         )}
 
+        {/* ================================
+            CUSTOMER / STATUS
+        ================================= */}
+
         <div className="mt-6 grid grid-cols-2 gap-6">
+
           <div>
-            <p className="font-semibold">Customer</p>
+            <p className="font-semibold">
+              Customer
+            </p>
             <p>{order.customer_name}</p>
           </div>
 
           <div>
-            <p className="font-semibold">Phone</p>
+            <p className="font-semibold">
+              Phone
+            </p>
             <p>{order.phone}</p>
           </div>
 
           <div>
-            <p className="font-semibold">Address</p>
+            <p className="font-semibold">
+              Address
+            </p>
             <p>{order.address}</p>
           </div>
 
           <div>
-            <p className="mb-2 font-semibold">Status</p>
+
+            <p className="mb-2 font-semibold">
+              Status
+            </p>
 
             <span
               className={`inline-block rounded-full px-3 py-1 text-sm font-semibold ${
@@ -209,8 +257,12 @@ export default function OrderDetailsPage({
             </span>
 
             <div className="mt-4">
+
+              {/* Placed */}
+
               {order.status === "Placed" && (
                 <div className="flex gap-3">
+
                   <button
                     onClick={() =>
                       updateStatus("Accepted")
@@ -240,8 +292,11 @@ export default function OrderDetailsPage({
                       ? "Updating..."
                       : "Cancel Order"}
                   </button>
+
                 </div>
               )}
+
+              {/* Accepted */}
 
               {order.status === "Accepted" && (
                 <button
@@ -257,6 +312,8 @@ export default function OrderDetailsPage({
                 </button>
               )}
 
+              {/* Dispatched */}
+
               {order.status === "Dispatched" && (
                 <button
                   onClick={() =>
@@ -271,97 +328,147 @@ export default function OrderDetailsPage({
                 </button>
               )}
 
+              {/* Cancelled */}
+
               {order.status === "Cancelled" && (
                 <div className="rounded bg-red-100 px-4 py-2 font-semibold text-red-700">
                   ✕ Order Cancelled
                 </div>
               )}
+
             </div>
           </div>
         </div>
       </div>
 
+      {/* ================================
+          ORDER ITEMS
+      ================================= */}
+
       <div className="overflow-hidden rounded-xl bg-white shadow">
+
         <table className="w-full">
+
           <thead className="bg-slate-100">
+
             <tr>
+
               <th className="px-5 py-4 text-left">
                 Product
               </th>
+
               <th className="px-5 py-4 text-center">
                 Qty
               </th>
+
               <th className="px-5 py-4 text-right">
                 Price
               </th>
+
               <th className="px-5 py-4 text-right">
                 Amount
               </th>
+
             </tr>
+
           </thead>
 
           <tbody>
-            {items.map((item, index) => (
-              <tr
-                key={index}
-                className="border-t"
-              >
-                <td className="px-5 py-4">
-                  {item.product_name}
-                </td>
 
-                <td className="px-5 py-4 text-center">
-                  {item.quantity}
-                </td>
+            {items.map(
+              (item, index) => (
+                <tr
+                  key={index}
+                  className="border-t"
+                >
 
-                <td className="px-5 py-4 text-right">
-                  ₹
-                  {Number(
-                    item.price
-                  ).toLocaleString("en-IN")}
-                </td>
+                  <td className="px-5 py-4">
+                    {item.product_name}
+                  </td>
 
-                <td className="px-5 py-4 text-right font-semibold">
-                  ₹
-                  {Number(
-                    item.amount
-                  ).toLocaleString("en-IN")}
-                </td>
-              </tr>
-            ))}
+                  <td className="px-5 py-4 text-center">
+                    {item.quantity}
+                  </td>
+
+                  <td className="px-5 py-4 text-right">
+                    ₹
+                    {Number(
+                      item.price
+                    ).toLocaleString(
+                      "en-IN"
+                    )}
+                  </td>
+
+                  <td className="px-5 py-4 text-right font-semibold">
+                    ₹
+                    {Number(
+                      item.amount
+                    ).toLocaleString(
+                      "en-IN"
+                    )}
+                  </td>
+
+                </tr>
+              )
+            )}
+
           </tbody>
+
         </table>
 
+        {/* ================================
+            ORDER TOTALS
+        ================================= */}
+
         <div className="space-y-2 border-t p-6">
+
           <div className="flex justify-between">
-            <span>Subtotal</span>
+            <span>
+              Subtotal
+            </span>
+
             <span>
               ₹
               {Number(
                 order.subtotal
-              ).toLocaleString("en-IN")}
+              ).toLocaleString(
+                "en-IN"
+              )}
             </span>
           </div>
 
           <div className="flex justify-between">
-            <span>Shipping</span>
+            <span>
+              Shipping
+            </span>
+
             <span>
               ₹
               {Number(
                 order.shipping
-              ).toLocaleString("en-IN")}
+              ).toLocaleString(
+                "en-IN"
+              )}
             </span>
           </div>
 
           <div className="flex justify-between text-xl font-bold">
-            <span>Grand Total</span>
+
+            <span>
+              Grand Total
+            </span>
+
             <span>
               ₹
               {Number(
                 order.grand_total
-              ).toLocaleString("en-IN")}
+              ).toLocaleString(
+                "en-IN"
+              )}
             </span>
+
           </div>
+
         </div>
       </div>
     </div>
