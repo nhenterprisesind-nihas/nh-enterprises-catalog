@@ -167,7 +167,7 @@ export default function CatalogPage() {
               />
             </div>
           </div>
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-thin">
+          <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-thin lg:hidden">
             {categories.map((cat) => (
               <button
                 key={cat}
@@ -184,18 +184,43 @@ export default function CatalogPage() {
           </div>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        {filteredProducts.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-gray-400 text-lg">No products found matching your criteria.</p>
+      <main className="max-w-7xl mx-auto px-4 py-6 lg:flex lg:items-start lg:gap-8">
+        <aside className="hidden lg:block lg:sticky lg:top-32 lg:w-52 lg:flex-shrink-0">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-900">
+              Categories
+            </h2>
+            <nav className="max-h-[calc(100vh-10rem)] space-y-1 overflow-y-auto pr-1" aria-label="Product categories">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-all ${
+                    selectedCategory === cat
+                      ? "bg-emerald-600 text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </nav>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.name} product={product} />
-            ))}
-          </div>
-        )}
+        </aside>
+
+        <div className="min-w-0 flex-1">
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-gray-400 text-lg">No products found matching your criteria.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.name} product={product} />
+              ))}
+            </div>
+          )}
+        </div>
       </main>
       <Cart />
       <Footer />
