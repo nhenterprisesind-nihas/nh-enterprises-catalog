@@ -1,3 +1,7 @@
+"use client";
+
+import { trackEvent } from "@/lib/trackEvent";
+
 const whatsappNumber =
   process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919999999999";
 const message = encodeURIComponent("Hi, I'm interested in your products.");
@@ -9,6 +13,7 @@ export default function WhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"
+      onClick={() => trackEvent("wa-floating-click")}
       className="fixed bottom-24 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-all hover:scale-105 hover:bg-[#20BD5A]"
     >
       <svg

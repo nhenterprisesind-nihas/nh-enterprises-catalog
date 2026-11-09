@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { getAvailableStock, useCart } from "@/context/CartContext";
 import { saveOrder } from "@/lib/orders";
+import { trackEvent } from "@/lib/trackEvent";
 
 export default function Cart() {
   const {
@@ -140,6 +141,7 @@ const handleSubmitOrder = async () => {
 
     const message = generateWhatsAppMessage(orderNo);
 
+    trackEvent("wa-order-click");
     window.open(
       `https://wa.me/${whatsappNumber}?text=${message}`,
       "_blank"
