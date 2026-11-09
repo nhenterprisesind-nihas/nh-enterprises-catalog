@@ -12,7 +12,7 @@ import Papa from "papaparse";
 import ProductCard from "@/components/ProductCard";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import Cart from "@/components/Cart";
-import { Product } from "@/context/CartContext";
+import { Product, useCart } from "@/context/CartContext";
 import Footer from "@/components/Footer";
 import FilterBar, {
   CategoryFilter,
@@ -26,6 +26,7 @@ const PRODUCT_LOAD_ERROR =
   "Couldn't load products. Please check your connection and try again.";
 
 export default function CatalogPage() {
+  const { reconcileProducts } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +47,9 @@ export default function CatalogPage() {
     const sheetUrl = process.env.NEXT_PUBLIC_SHEET_URL;
 
     if (!sheetUrl) {
-      setProducts(getSampleProducts());
+      const sampleProducts = getSampleProducts();
+      reconcileProducts(sampleProducts);
+      setProducts(sampleProducts);
       setError(null);
       setLoading(false);
       return;
@@ -127,6 +130,7 @@ export default function CatalogPage() {
       });
 
       if (isMountedRef.current && activeFetchRef.current === controller) {
+        reconcileProducts(parsed);
         setProducts(parsed);
         setLoading(false);
       }
@@ -141,7 +145,7 @@ export default function CatalogPage() {
         activeFetchRef.current = null;
       }
     }
-  }, []);
+  }, [reconcileProducts]);
 
   useEffect(() => {
     isMountedRef.current = true;

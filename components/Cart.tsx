@@ -14,6 +14,8 @@ export default function Cart() {
     totalAmount,
     isCartOpen,
     setIsCartOpen,
+    cartNotice,
+    dismissCartNotice,
   } = useCart();
 
   const [customerName, setCustomerName] = useState("");
@@ -209,6 +211,22 @@ const handleSubmitOrder = async () => {
 
             {/* Cart Items */}
             <div className="p-4 space-y-4">
+              {cartNotice && (
+                <div
+                  className="flex items-start justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800"
+                  role="status"
+                >
+                  <p>{cartNotice}</p>
+                  <button
+                    type="button"
+                    onClick={dismissCartNotice}
+                    aria-label="Dismiss cart update notice"
+                    className="shrink-0 font-semibold text-amber-700 hover:text-amber-900"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
               {items.length === 0 ? (
                 <div className="text-center py-12">
                   <svg className="w-16 h-16 mx-auto text-gray-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

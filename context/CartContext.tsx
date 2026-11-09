@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 
 export interface Product {
   name: string;
@@ -20,12 +27,20 @@ export interface CartItem {
   priceType: "mrp" | "retail" | "wholesale";
 }
 
+interface SavedCartItem {
+  name: string;
+  quantity: number;
+}
+
 interface CartContextType {
   items: CartItem[];
   addToCart: (product: Product, quantity: number, priceType: "mrp" | "retail" | "wholesale") => void;
   removeFromCart: (productName: string) => void;
   updateQuantity: (productName: string, quantity: number) => void;
   clearCart: () => void;
+  reconcileProducts: (products: Product[]) => void;
+  cartNotice: string | null;
+  dismissCartNotice: () => void;
   totalItems: number;
   totalAmount: number;
   isCartOpen: boolean;
@@ -35,6 +50,9 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const MOQ_WHOLESALE = 10;
+const CART_STORAGE_KEY = "nh-cart-v1";
+const CART_UPDATE_NOTICE =
+  "Some items in your cart were updated because prices or stock changed.";
 
 export function getAvailableStock(stock: unknown): number {
   const parsedStock =
@@ -57,6 +75,117 @@ function clampQuantity(quantity: number, stock: number): number {
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [productsReconciled, setProductsReconciled] = useState(false);
+  const [cartNotice, setCartNotice] = useState<string | null>(null);
+  const savedItemsRef = useRef<SavedCartItem[]>([]);
+  const productsRef = useRef<Product[] | null>(null);
+  const isHydratedRef = useRef(false);
+
+  const reconcileSavedItems = useCallback((products: Product[]) => {
+    const productsByName = new Map(
+      products.map((product) => [product.name.trim().toLowerCase(), product])
+    );
+    let itemsWereUpdated = false;
+    const reconciledItems: CartItem[] = [];
+
+    for (const savedItem of savedItemsRef.current) {
+      const product = productsByName.get(savedItem.name.trim().toLowerCase());
+      const availableStock = product ? getAvailableStock(product.stock) : 0;
+      if (!product || availableStock === 0) {
+        itemsWereUpdated = true;
+        continue;
+      }
+
+      const quantity = clampQuantity(savedItem.quantity, availableStock);
+      if (quantity !== savedItem.quantity) {
+        itemsWereUpdated = true;
+      }
+      reconciledItems.push({
+        product,
+        quantity,
+        priceType: "retail",
+      });
+    }
+
+    savedItemsRef.current = reconciledItems.map((item) => ({
+      name: item.product.name.trim(),
+      quantity: item.quantity,
+    }));
+    setItems(reconciledItems);
+    if (itemsWereUpdated) {
+      setCartNotice(CART_UPDATE_NOTICE);
+    }
+  }, []);
+
+  const reconcileProducts = useCallback(
+    (products: Product[]) => {
+      productsRef.current = products;
+      setProductsReconciled(true);
+      if (isHydratedRef.current) {
+        reconcileSavedItems(products);
+      }
+    },
+    [reconcileSavedItems]
+  );
+
+  useEffect(() => {
+    let savedItems: SavedCartItem[] = [];
+    try {
+      const storedCart = window.localStorage.getItem(CART_STORAGE_KEY);
+      if (storedCart !== null) {
+        const parsed: unknown = JSON.parse(storedCart);
+        if (Array.isArray(parsed)) {
+          savedItems = parsed.filter(
+            (item): item is SavedCartItem =>
+              typeof item === "object" &&
+              item !== null &&
+              "name" in item &&
+              typeof item.name === "string" &&
+              item.name.trim() !== "" &&
+              "quantity" in item &&
+              typeof item.quantity === "number" &&
+              Number.isFinite(item.quantity) &&
+              item.quantity > 0
+          );
+        }
+      }
+    } catch {
+      savedItems = [];
+    }
+
+    savedItemsRef.current = savedItems.map((item) => ({
+      name: item.name.trim(),
+      quantity: Math.floor(item.quantity),
+    }));
+    isHydratedRef.current = true;
+    setIsHydrated(true);
+
+    if (productsRef.current) {
+      reconcileSavedItems(productsRef.current);
+    }
+  }, [reconcileSavedItems]);
+
+  useEffect(() => {
+    if (!isHydrated || !productsReconciled) return;
+
+    try {
+      if (items.length === 0) {
+        savedItemsRef.current = [];
+        window.localStorage.removeItem(CART_STORAGE_KEY);
+        return;
+      }
+
+      const minimalCart = items.map((item) => ({
+        name: item.product.name.trim(),
+        quantity: item.quantity,
+      }));
+      savedItemsRef.current = minimalCart;
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(minimalCart));
+    } catch {
+      // Storage may be unavailable in private browsing; keep the in-memory cart.
+    }
+  }, [items, isHydrated, productsReconciled]);
 
   const addToCart = useCallback(
     (product: Product, quantity: number, priceType: "mrp" | "retail" | "wholesale") => {
@@ -112,6 +241,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = useCallback(() => {
     setItems([]);
+    savedItemsRef.current = [];
+    try {
+      window.localStorage.removeItem(CART_STORAGE_KEY);
+    } catch {
+      // Storage may be unavailable in private browsing; the in-memory cart is still cleared.
+    }
+  }, []);
+
+  const dismissCartNotice = useCallback(() => {
+    setCartNotice(null);
   }, []);
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -134,6 +273,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         updateQuantity,
         clearCart,
+        reconcileProducts,
+        cartNotice,
+        dismissCartNotice,
         totalItems,
         totalAmount,
         isCartOpen,
