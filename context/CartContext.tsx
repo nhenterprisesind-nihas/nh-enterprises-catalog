@@ -11,6 +11,7 @@ export interface Product {
   wholesale_price: number;
   images: string[];
   stock: number;
+  originalRowIndex: number;
 }
 
 export interface CartItem {

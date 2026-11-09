@@ -6,13 +6,19 @@ import ProductCard from "@/components/ProductCard";
 import Cart from "@/components/Cart";
 import { Product } from "@/context/CartContext";
 import Footer from "@/components/Footer";
+import FilterBar, {
+  type CategoryOption,
+  type SortOption,
+} from "@/components/FilterBar";
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOption, setSortOption] = useState<SortOption>("newest");
+  const [inStockOnly, setInStockOnly] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -29,47 +35,45 @@ export default function CatalogPage() {
         const response = await fetch(sheetUrl + cacheBuster);
         const csvText = await response.text();
 
-        Papa.parse(csvText, {
+        Papa.parse<Record<string, string>>(csvText, {
           header: true,
           skipEmptyLines: true,
           complete: (results) => {
-            const parsed: Product[] = results.data.map((row: any) => {
-            const images: string[] = [];
-						const hasMultiImages = row.image_url_1 !== undefined;
+            const parsed: Product[] = results.data.map(
+              (row: Record<string, string>, originalRowIndex: number) => {
+                const images: string[] = [];
+                const hasMultiImages = row.image_url_1 !== undefined;
 
-						const isValidImage = (url: string | undefined) => {
-  					if (!url) return false;
-    				const value = url.trim().toUpperCase();
-					  return (
-    								value !== "" &&
-    								value !== "NA" &&
-    								value !== "N/A" &&
-    								value !== "-"
-  								);
-						};
+                const isValidImage = (url: string | undefined) => {
+                  if (!url) return false;
+                  const value = url.trim().toUpperCase();
+                  return value !== "" && value !== "NA" && value !== "N/A" && value !== "-";
+                };
 
-						if (hasMultiImages) {
-  						for (let i = 1; i <= 5; i++) {
-    							const url = row[`image_url_${i}`];
-    									if (isValidImage(url)) {
-      										images.push(url.trim());
-    											}
-  									}
-							} else if (isValidImage(row.image_url)) {
-  									images.push(row.image_url.trim());
-						}
+                if (hasMultiImages) {
+                  for (let i = 1; i <= 5; i++) {
+                    const url = row[`image_url_${i}`];
+                    if (isValidImage(url)) {
+                      images.push(url.trim());
+                    }
+                  }
+                } else if (isValidImage(row.image_url)) {
+                  images.push(row.image_url.trim());
+                }
 
-              return {
-                name: row.name || "",
-                description: row.description || "",
-                category: row.category || "Uncategorized",
-                mrp: parseFloat(row.mrp) || 0,
-                retail_price: parseFloat(row.retail_price) || 0,
-                wholesale_price: parseFloat(row.wholesale_price) || 0,
-                images,
-                stock: parseInt(row.stock) || 0,
-              };
-            });
+                return {
+                  name: row.name || "",
+                  description: row.description || "",
+                  category: typeof row.category === "string" ? row.category.trim() : "",
+                  mrp: parseFloat(row.mrp) || 0,
+                  retail_price: parseFloat(row.retail_price) || 0,
+                  wholesale_price: parseFloat(row.wholesale_price) || 0,
+                  images,
+                  stock: parseInt(row.stock) || 0,
+                  originalRowIndex,
+                };
+              }
+            );
             setProducts(parsed.filter((p) => p.name));
             setLoading(false);
           },
@@ -87,21 +91,72 @@ export default function CatalogPage() {
     fetchProducts();
   }, []);
 
-  const categories = useMemo(() => {
-    const cats = new Set(products.map((p) => p.category));
-    return ["All", ...Array.from(cats).sort()];
+  const categories = useMemo<CategoryOption[]>(() => {
+    const categoryLabels = new Map<string, string>();
+    products.forEach((product) => {
+      const label = product.category.trim();
+      const key = label.toLowerCase();
+      if (key && !categoryLabels.has(key)) {
+        categoryLabels.set(key, label);
+      }
+    });
+
+    return Array.from(categoryLabels, ([key, label]) => ({ key, label })).sort(
+      (a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+    );
   }, [products]);
 
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      const matchesCategory = selectedCategory === "All" || p.category === selectedCategory;
-      const matchesSearch =
-        searchQuery === "" ||
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const searchedProducts = products.filter(
+      (product) =>
+        normalizedSearch === "" ||
+        product.name.toLowerCase().includes(normalizedSearch) ||
+        product.description.toLowerCase().includes(normalizedSearch)
+    );
+    const categoryFilteredProducts = searchedProducts.filter(
+      (product) =>
+        selectedCategory === null ||
+        product.category.trim().toLowerCase() === selectedCategory
+    );
+    const stockFilteredProducts = inStockOnly
+      ? categoryFilteredProducts.filter(
+          (product) => Number.isFinite(product.stock) && product.stock > 0
+        )
+      : categoryFilteredProducts;
+
+    return [...stockFilteredProducts].sort((a, b) => {
+      if (sortOption === "price-low-to-high" || sortOption === "price-high-to-low") {
+        const aMissingPrice = !Number.isFinite(a.retail_price) || a.retail_price === 0;
+        const bMissingPrice = !Number.isFinite(b.retail_price) || b.retail_price === 0;
+        if (aMissingPrice !== bMissingPrice) {
+          return aMissingPrice ? 1 : -1;
+        }
+
+        const priceOrder =
+          sortOption === "price-low-to-high"
+            ? a.retail_price - b.retail_price
+            : b.retail_price - a.retail_price;
+        return priceOrder || b.originalRowIndex - a.originalRowIndex;
+      }
+
+      if (sortOption === "name-a-to-z") {
+        return (
+          a.name.localeCompare(b.name, undefined, { sensitivity: "base" }) ||
+          b.originalRowIndex - a.originalRowIndex
+        );
+      }
+
+      return b.originalRowIndex - a.originalRowIndex;
     });
-  }, [products, selectedCategory, searchQuery]);
+  }, [products, searchQuery, selectedCategory, inStockOnly, sortOption]);
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory(null);
+    setInStockOnly(false);
+    setSortOption("newest");
+  };
 
   if (loading) {
     return (
@@ -132,7 +187,7 @@ export default function CatalogPage() {
     <div className="min-h-screen bg-[#FDFBF7]">
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
                 {process.env.NEXT_PUBLIC_LOGO_URL ? (
@@ -154,64 +209,33 @@ export default function CatalogPage() {
                 </p>
               </div>
             </div>
-            <div className="relative w-full sm:w-72">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-thin lg:hidden">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  selectedCategory === cat
-                    ? "bg-emerald-600 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+            <FilterBar
+              searchQuery={searchQuery}
+              onSearchQueryChange={setSearchQuery}
+              sortOption={sortOption}
+              onSortOptionChange={setSortOption}
+              inStockOnly={inStockOnly}
+              onInStockOnlyChange={setInStockOnly}
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onSelectedCategoryChange={setSelectedCategory}
+              resultCount={filteredProducts.length}
+            />
           </div>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 py-6 lg:flex lg:items-start lg:gap-8">
-        <aside className="hidden lg:block lg:sticky lg:top-32 lg:w-52 lg:flex-shrink-0">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-900">
-              Categories
-            </h2>
-            <nav className="max-h-[calc(100vh-10rem)] space-y-1 overflow-y-auto pr-1" aria-label="Product categories">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-all ${
-                    selectedCategory === cat
-                      ? "bg-emerald-600 text-white shadow-sm"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </aside>
-
-        <div className="min-w-0 flex-1">
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        <div className="min-w-0">
           {filteredProducts.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-gray-400 text-lg">No products found matching your criteria.</p>
+              <p className="text-gray-400 text-lg">No products match your filters</p>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+              >
+                Clear filters
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -243,6 +267,7 @@ function getSampleProducts(): Product[] {
         "https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=400",
       ],
       stock: 25,
+      originalRowIndex: 0,
     }
   ];
 }

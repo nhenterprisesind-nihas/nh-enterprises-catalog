@@ -205,7 +205,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
 
           <span className="absolute top-2 left-2 bg-emerald-600 text-white text-xs font-medium px-2 py-0.5 rounded-md z-10">
-            {product.category}
+            {product.category || "Uncategorized"}
           </span>
           {isOutOfStock && (
             <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
