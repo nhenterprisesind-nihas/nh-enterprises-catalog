@@ -13,6 +13,7 @@ import Cart from "@/components/Cart";
 import { Product } from "@/context/CartContext";
 import Footer from "@/components/Footer";
 import FilterBar, {
+  CategoryFilter,
   type CategoryOption,
   type SortOption,
 } from "@/components/FilterBar";
@@ -234,45 +235,45 @@ export default function CatalogPage() {
     <div className="min-h-screen bg-[#FDFBF7]">
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
-                {process.env.NEXT_PUBLIC_LOGO_URL ? (
-                  <img
-                    src={process.env.NEXT_PUBLIC_LOGO_URL}
-                    alt="Brand Logo"
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-white font-bold text-lg">N</span>
-                )}
-              </div>
-              <div>
-                <h1 className="text-gray-900 font-bold text-xl sm:text-2xl tracking-tight">
-                  Nikshas Collections
-                </h1>
-                <p className="text-gray-500 text-xs">
-                  Quality products at retail and wholesale pricing
-                </p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-emerald-600 flex flex-shrink-0 items-center justify-center">
+              {process.env.NEXT_PUBLIC_LOGO_URL ? (
+                <img
+                  src={process.env.NEXT_PUBLIC_LOGO_URL}
+                  alt="Brand Logo"
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+              ) : (
+                <span className="text-lg font-bold text-white">N</span>
+              )}
             </div>
-            <FilterBar
-              searchQuery={searchQuery}
-              onSearchQueryChange={handleSearchQueryChange}
-              sortOption={sortOption}
-              onSortOptionChange={handleSortOptionChange}
-              inStockOnly={inStockOnly}
-              onInStockOnlyChange={handleInStockOnlyChange}
-              categories={categories}
-              selectedCategory={selectedCategory}
-              onSelectedCategoryChange={handleSelectedCategoryChange}
-              resultCount={filteredProducts.length}
-            />
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+                Nikshas Collections
+              </h1>
+              <p className="text-xs text-gray-500">
+                Quality products at retail and wholesale pricing
+              </p>
+            </div>
           </div>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="min-w-0">
+      <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 md:flex-row md:items-start">
+        <CategoryFilter
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onSelectedCategoryChange={handleSelectedCategoryChange}
+        />
+        <section className="min-w-0 flex-1">
+          <FilterBar
+            searchQuery={searchQuery}
+            onSearchQueryChange={handleSearchQueryChange}
+            sortOption={sortOption}
+            onSortOptionChange={handleSortOptionChange}
+            inStockOnly={inStockOnly}
+            onInStockOnlyChange={handleInStockOnlyChange}
+            resultCount={filteredProducts.length}
+          />
           {filteredProducts.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-gray-400 text-lg">No products match your filters</p>
@@ -308,7 +309,7 @@ export default function CatalogPage() {
               </button>
             </div>
           )}
-        </div>
+        </section>
       </main>
       <Cart />
       <Footer />
