@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { Product, useCart } from "@/context/CartContext";
+import { getAvailableStock, Product, useCart } from "@/context/CartContext";
 
 function ChevronLeftIcon({ className }: { className?: string }) {
   return (
@@ -55,6 +55,8 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const MOQ_WHOLESALE = 10;
+  const availableStock = getAvailableStock(product.stock);
+  const isOutOfStock = availableStock === 0;
 
   const images = product.images.length > 0 ? product.images : [];
   const hasMultipleImages = images.length > 1;
@@ -70,17 +72,14 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
   };
 
   const handleQuantityChange = (value: string) => {
-    const num = parseInt(value, 10);
-    if (isNaN(num) || num < 1) {
-      const minQty = selectedPrice === "wholesale" ? MOQ_WHOLESALE : 1;
-      setQuantity(minQty);
-      return;
-    }
-    const minQty = selectedPrice === "wholesale" ? MOQ_WHOLESALE : 1;
-    setQuantity(Math.max(num, minQty));
+    if (isOutOfStock || value.trim() === "") return;
+    const num = Number(value);
+    if (!Number.isFinite(num)) return;
+    setQuantity(Math.min(Math.max(Math.floor(num), 1), availableStock));
   };
 
   const handleAdd = () => {
+    if (isOutOfStock) return;
     const effectiveQty = selectedPrice === "wholesale" ? Math.max(quantity, MOQ_WHOLESALE) : quantity;
     addToCart(product, effectiveQty, selectedPrice);
   };
@@ -111,7 +110,6 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
     setGalleryOpen(true);
   };
 
-  const isOutOfStock = product.stock <= 0;
   const discountPercent =
   product.mrp > product.retail_price
     ? Math.round(
@@ -249,7 +247,9 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
               <button
                 onClick={() => {
                   setSelectedPrice("wholesale");
-                  if (quantity < MOQ_WHOLESALE) setQuantity(MOQ_WHOLESALE);
+                  if (quantity < MOQ_WHOLESALE && !isOutOfStock) {
+                    setQuantity(Math.min(MOQ_WHOLESALE, availableStock));
+                  }
                 }}
                 className={`text-center p-2 rounded-md text-xs transition-all ${
                   selectedPrice === "wholesale"
@@ -271,23 +271,29 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
           <div className="flex items-center gap-2">
             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
               <button
-                onClick={() => {
-                  const minQty = selectedPrice === "wholesale" ? MOQ_WHOLESALE : 1;
-                  setQuantity(Math.max(quantity - 1, minQty));
-                }}
+                onClick={() => setQuantity(Math.max(quantity - 1, 1))}
+                disabled={quantity <= 1 || isOutOfStock}
                 className="px-2 py-1.5 text-gray-600 hover:bg-gray-100 transition-colors text-sm"
               >
                 −
               </button>
               <input
                 type="number"
-                min={selectedPrice === "wholesale" ? MOQ_WHOLESALE : 1}
+                min={1}
+                max={availableStock}
                 value={quantity}
+                disabled={isOutOfStock}
                 onChange={(e) => handleQuantityChange(e.target.value)}
+                onBlur={() => {
+                  if (!isOutOfStock) {
+                    setQuantity(Math.min(Math.max(quantity, 1), availableStock));
+                  }
+                }}
                 className="w-12 text-center text-sm text-gray-800 border-x border-gray-200 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <button
-                onClick={() => setQuantity(quantity + 1)}
+                onClick={() => setQuantity(Math.min(quantity + 1, availableStock))}
+                disabled={quantity >= availableStock || isOutOfStock}
                 className="px-2 py-1.5 text-gray-600 hover:bg-gray-100 transition-colors text-sm"
               >
                 +
@@ -298,13 +304,15 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
               disabled={isOutOfStock}
               className="flex-1 bg-emerald-600 text-white font-semibold text-sm px-3 py-2 rounded-lg hover:bg-emerald-700 active:bg-emerald-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
-              Add ₹{(getPrice() * quantity).toLocaleString("en-IN")}
+              {isOutOfStock
+                ? "Out of stock"
+                : `Add ₹${(getPrice() * quantity).toLocaleString("en-IN")}`}
             </button>
           </div>
 
-          {!isOutOfStock && product.stock < 20 && (
+          {!isOutOfStock && quantity >= availableStock && (
             <p className="text-amber-600 text-xs mt-2 text-center">
-              Only {product.stock} left in stock
+              Only {availableStock} available
             </p>
           )}
         </div>

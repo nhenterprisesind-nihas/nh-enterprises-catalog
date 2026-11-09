@@ -36,24 +36,58 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const MOQ_WHOLESALE = 10;
 
+export function getAvailableStock(stock: unknown): number {
+  const parsedStock =
+    typeof stock === "number"
+      ? stock
+      : typeof stock === "string" && stock.trim() !== ""
+        ? Number(stock)
+        : 0;
+
+  return Number.isFinite(parsedStock) ? Math.max(0, Math.floor(parsedStock)) : 0;
+}
+
+function clampQuantity(quantity: number, stock: number): number {
+  if (stock < 1) return 0;
+
+  const parsedQuantity = Number.isFinite(quantity) ? Math.floor(quantity) : 1;
+  return Math.min(Math.max(parsedQuantity, 1), stock);
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const addToCart = useCallback(
     (product: Product, quantity: number, priceType: "mrp" | "retail" | "wholesale") => {
-      const effectiveQty = priceType === "wholesale" ? Math.max(quantity, MOQ_WHOLESALE) : quantity;
+      const availableStock = getAvailableStock(product.stock);
+      if (availableStock === 0) return;
+
+      const requestedQuantity =
+        priceType === "wholesale" ? Math.max(quantity, MOQ_WHOLESALE) : quantity;
 
       setItems((prev) => {
         const existing = prev.find((item) => item.product.name === product.name);
         if (existing) {
           return prev.map((item) =>
             item.product.name === product.name
-              ? { ...item, quantity: item.quantity + effectiveQty, priceType }
+              ? {
+                  ...item,
+                  product,
+                  quantity: clampQuantity(item.quantity + requestedQuantity, availableStock),
+                  priceType,
+                }
               : item
           );
         }
-        return [...prev, { product, quantity: effectiveQty, priceType }];
+        return [
+          ...prev,
+          {
+            product,
+            quantity: clampQuantity(requestedQuantity, availableStock),
+            priceType,
+          },
+        ];
       });
     },
     []
@@ -65,13 +99,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const updateQuantity = useCallback((productName: string, quantity: number) => {
     setItems((prev) =>
-      prev.map((item) => {
-        if (item.product.name === productName) {
-          const minQty = item.priceType === "wholesale" ? MOQ_WHOLESALE : 1;
-          const newQty = Math.max(quantity, minQty);
-          return { ...item, quantity: newQty };
-        }
-        return item;
+      prev.flatMap((item) => {
+        if (item.product.name !== productName) return [item];
+
+        const availableStock = getAvailableStock(item.product.stock);
+        if (availableStock === 0) return [];
+
+        return [{ ...item, quantity: clampQuantity(quantity, availableStock) }];
       })
     );
   }, []);

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useCart } from "@/context/CartContext";
+import { getAvailableStock, useCart } from "@/context/CartContext";
 import { saveOrder } from "@/lib/orders";
 
 export default function Cart() {
@@ -15,8 +15,6 @@ export default function Cart() {
     isCartOpen,
     setIsCartOpen,
   } = useCart();
-
-  const MOQ_WHOLESALE = 10;
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -33,11 +31,11 @@ export default function Cart() {
     }
   };
 
-  const handleQuantityInput = (productName: string, value: string, priceType: string) => {
-    const num = parseInt(value, 10);
-    if (isNaN(num) || num < 1) return;
-    const minQty = priceType === "wholesale" ? MOQ_WHOLESALE : 1;
-    updateQuantity(productName, Math.max(num, minQty));
+  const handleQuantityInput = (productName: string, value: string) => {
+    if (value.trim() === "") return;
+    const num = Number(value);
+    if (!Number.isFinite(num)) return;
+    updateQuantity(productName, num);
   };
 
   const generateOrderNumber = () => {
@@ -229,7 +227,7 @@ const handleSubmitOrder = async () => {
                   {items.map((item) => {
                     const price = getItemPrice(item);
                     const subtotal = price * item.quantity;
-                    const minQty = item.priceType === "wholesale" ? MOQ_WHOLESALE : 1;
+                    const availableStock = getAvailableStock(item.product.stock);
 
                     return (
                       <div
@@ -288,25 +286,33 @@ const handleSubmitOrder = async () => {
                           <div className="flex items-center border border-gray-200 rounded-md overflow-hidden bg-white">
                             <button
                               onClick={() => updateQuantity(item.product.name, item.quantity - 1)}
-                              disabled={item.quantity <= minQty}
+                              disabled={item.quantity <= 1}
                               className="px-2 py-1 text-gray-600 hover:bg-gray-100 transition-colors text-sm disabled:opacity-30"
                             >
                               −
                             </button>
                             <input
                               type="number"
-                              min={minQty}
+                              min={1}
+                              max={availableStock}
                               value={item.quantity}
-                              onChange={(e) => handleQuantityInput(item.product.name, e.target.value, item.priceType)}
+                              onChange={(e) => handleQuantityInput(item.product.name, e.target.value)}
+                              onBlur={() => updateQuantity(item.product.name, item.quantity)}
                               className="w-12 text-center text-sm text-gray-800 border-x border-gray-200 py-1 focus:outline-none focus:ring-1 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                             <button
                               onClick={() => updateQuantity(item.product.name, item.quantity + 1)}
-                              className="px-2 py-1 text-gray-600 hover:bg-gray-100 transition-colors text-sm"
+                              disabled={item.quantity >= availableStock}
+                              className="px-2 py-1 text-gray-600 hover:bg-gray-100 transition-colors text-sm disabled:opacity-30"
                             >
                               +
                             </button>
                           </div>
+                          {item.quantity >= availableStock && (
+                            <p className="text-amber-600 text-xs">
+                              Only {availableStock} available
+                            </p>
+                          )}
                           <span className="text-gray-900 font-semibold text-sm">
                             ₹{subtotal.toLocaleString("en-IN")}
                           </span>

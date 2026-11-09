@@ -48,7 +48,7 @@ export default function CatalogPage() {
 
       try {
         const cacheBuster = `${sheetUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
-        const response = await fetch(sheetUrl + cacheBuster);
+        const response = await fetch(sheetUrl + cacheBuster, { cache: "no-store" });
         const csvText = await response.text();
 
         Papa.parse<Record<string, string>>(csvText, {
