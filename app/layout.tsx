@@ -5,6 +5,9 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://nh-enterprises-catalog.vercel.app"
+  ),
   title: "NIKSHAS Online Shop",
   description: "Premium Product Catalog with Retail & Wholesale Pricing",
 };

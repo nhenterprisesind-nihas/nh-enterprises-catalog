@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { getAvailableStock, Product, useCart } from "@/context/CartContext";
+import Link from "next/link";
 
 function ChevronLeftIcon({ className }: { className?: string }) {
   return (
@@ -219,7 +220,7 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
 
         <div className="p-4 flex flex-col flex-1">
           <h3 className="text-gray-900 font-semibold text-base mb-1 line-clamp-2">
-            {product.name}
+            <Link href={`/product/${product.id}`}>{product.name}</Link>
           </h3>
           <p className="text-gray-500 text-sm mb-3 line-clamp-2 flex-1">
             {product.description}

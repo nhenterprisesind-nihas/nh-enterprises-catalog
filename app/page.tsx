@@ -8,7 +8,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import Papa from "papaparse";
 import ProductCard from "@/components/ProductCard";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import Cart from "@/components/Cart";
@@ -19,6 +18,7 @@ import FilterBar, {
   type CategoryOption,
   type SortOption,
 } from "@/components/FilterBar";
+import { parseProducts } from "@/lib/products";
 
 const PRODUCTS_PER_BATCH = 24;
 const EAGER_PRODUCT_IMAGE_COUNT = 6;
@@ -73,61 +73,7 @@ export default function CatalogPage() {
       }
 
       const csvText = await response.text();
-      const parsed = await new Promise<Product[]>((resolve, reject) => {
-        Papa.parse<Record<string, string>>(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            if (results.errors.length > 0) {
-              reject(new Error("Product CSV is invalid"));
-              return;
-            }
-
-            const productsFromCsv: Product[] = results.data.map(
-              (row: Record<string, string>, originalRowIndex: number) => {
-                const images: string[] = [];
-                const hasMultiImages = row.image_url_1 !== undefined;
-
-                const isValidImage = (url: string | undefined) => {
-                  if (!url) return false;
-                  const value = url.trim().toUpperCase();
-                  return value !== "" && value !== "NA" && value !== "N/A" && value !== "-";
-                };
-
-                if (hasMultiImages) {
-                  for (let i = 1; i <= 5; i++) {
-                    const url = row[`image_url_${i}`];
-                    if (isValidImage(url)) {
-                      images.push(url.trim());
-                    }
-                  }
-                } else if (isValidImage(row.image_url)) {
-                  images.push(row.image_url.trim());
-                }
-
-                return {
-                  name: row.name || "",
-                  description: row.description || "",
-                  category: typeof row.category === "string" ? row.category.trim() : "",
-                  mrp: parseFloat(row.mrp) || 0,
-                  retail_price: parseFloat(row.retail_price) || 0,
-                  wholesale_price: parseFloat(row.wholesale_price) || 0,
-                  images,
-                  stock: parseInt(row.stock) || 0,
-                  originalRowIndex,
-                };
-              }
-            ).filter((product) => product.name.trim() !== "");
-
-            if (productsFromCsv.length === 0) {
-              reject(new Error("Product CSV contains no products"));
-              return;
-            }
-            resolve(productsFromCsv);
-          },
-          error: (parseError: Error) => reject(parseError),
-        });
-      });
+      const parsed = parseProducts(csvText);
 
       if (isMountedRef.current && activeFetchRef.current === controller) {
         reconcileProducts(parsed);
@@ -354,7 +300,7 @@ export default function CatalogPage() {
                 <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {visibleProducts.map((product, index) => (
                     <ProductCard
-                      key={product.originalRowIndex}
+                      key={product.id}
                       product={product}
                       eagerImage={index < EAGER_PRODUCT_IMAGE_COUNT}
                     />
@@ -387,6 +333,7 @@ export default function CatalogPage() {
 function getSampleProducts(): Product[] {
   return [
     {
+      id: "premium-silk-saree",
       name: "Premium Silk Saree",
       description: "Handwoven Banarasi silk saree with gold zari work",
       category: "Clothing",
