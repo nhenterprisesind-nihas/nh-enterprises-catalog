@@ -5,10 +5,12 @@ import React, {
   useDeferredValue,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import Papa from "papaparse";
 import ProductCard from "@/components/ProductCard";
+import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import Cart from "@/components/Cart";
 import { Product } from "@/context/CartContext";
 import Footer from "@/components/Footer";
@@ -20,6 +22,8 @@ import FilterBar, {
 
 const PRODUCTS_PER_BATCH = 24;
 const EAGER_PRODUCT_IMAGE_COUNT = 6;
+const PRODUCT_LOAD_ERROR =
+  "Couldn't load products. Please check your connection and try again.";
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -30,32 +34,53 @@ export default function CatalogPage() {
   const [sortOption, setSortOption] = useState<SortOption>("newest");
   const [inStockOnly, setInStockOnly] = useState(false);
   const [visibleProductCount, setVisibleProductCount] = useState(PRODUCTS_PER_BATCH);
+  const isMountedRef = useRef(false);
+  const activeFetchRef = useRef<AbortController | null>(null);
 
   const deferredSelectedCategory = useDeferredValue(selectedCategory);
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const deferredSortOption = useDeferredValue(sortOption);
   const deferredInStockOnly = useDeferredValue(inStockOnly);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const sheetUrl = process.env.NEXT_PUBLIC_SHEET_URL;
+  const loadProducts = useCallback(async () => {
+    const sheetUrl = process.env.NEXT_PUBLIC_SHEET_URL;
 
-      if (!sheetUrl) {
-        setProducts(getSampleProducts());
-        setLoading(false);
-        return;
+    if (!sheetUrl) {
+      setProducts(getSampleProducts());
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    activeFetchRef.current?.abort();
+    const controller = new AbortController();
+    activeFetchRef.current = controller;
+    const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const cacheBuster = `${sheetUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
+      const response = await fetch(sheetUrl + cacheBuster, {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        throw new Error(`Product fetch failed with status ${response.status}`);
       }
 
-      try {
-        const cacheBuster = `${sheetUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
-        const response = await fetch(sheetUrl + cacheBuster, { cache: "no-store" });
-        const csvText = await response.text();
-
+      const csvText = await response.text();
+      const parsed = await new Promise<Product[]>((resolve, reject) => {
         Papa.parse<Record<string, string>>(csvText, {
           header: true,
           skipEmptyLines: true,
           complete: (results) => {
-            const parsed: Product[] = results.data.map(
+            if (results.errors.length > 0) {
+              reject(new Error("Product CSV is invalid"));
+              return;
+            }
+
+            const productsFromCsv: Product[] = results.data.map(
               (row: Record<string, string>, originalRowIndex: number) => {
                 const images: string[] = [];
                 const hasMultiImages = row.image_url_1 !== undefined;
@@ -89,23 +114,45 @@ export default function CatalogPage() {
                   originalRowIndex,
                 };
               }
-            );
-            setProducts(parsed.filter((p) => p.name));
-            setLoading(false);
+            ).filter((product) => product.name.trim() !== "");
+
+            if (productsFromCsv.length === 0) {
+              reject(new Error("Product CSV contains no products"));
+              return;
+            }
+            resolve(productsFromCsv);
           },
-          error: (err: Error) => {
-            setError("Failed to parse product data: " + err.message);
-            setLoading(false);
-          },
+          error: (parseError: Error) => reject(parseError),
         });
-      } catch (err) {
-        setError("Failed to fetch product data. Please check the sheet URL.");
+      });
+
+      if (isMountedRef.current && activeFetchRef.current === controller) {
+        setProducts(parsed);
         setLoading(false);
       }
-    };
-
-    fetchProducts();
+    } catch {
+      if (isMountedRef.current && activeFetchRef.current === controller) {
+        setError(PRODUCT_LOAD_ERROR);
+        setLoading(false);
+      }
+    } finally {
+      window.clearTimeout(timeoutId);
+      if (activeFetchRef.current === controller) {
+        activeFetchRef.current = null;
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    void loadProducts();
+
+    return () => {
+      isMountedRef.current = false;
+      activeFetchRef.current?.abort();
+      activeFetchRef.current = null;
+    };
+  }, [loadProducts]);
 
   const categories = useMemo<CategoryOption[]>(() => {
     const categoryLabels = new Map<string, string>();
@@ -206,31 +253,6 @@ export default function CatalogPage() {
 
   const visibleProducts = filteredProducts.slice(0, visibleProductCount);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium text-lg">Loading Products...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FDFBF7]">
-        <div className="bg-white border border-red-200 rounded-xl p-8 max-w-md text-center shadow-sm">
-          <svg className="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-          <h2 className="text-gray-800 font-semibold text-xl mb-2">Something went wrong</h2>
-          <p className="text-gray-500">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
@@ -259,11 +281,26 @@ export default function CatalogPage() {
         </div>
       </header>
       <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 md:flex-row md:items-start">
-        <CategoryFilter
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onSelectedCategoryChange={handleSelectedCategoryChange}
-        />
+        {loading ? (
+          <aside
+            className="hidden h-fit w-56 shrink-0 animate-pulse rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:block"
+            aria-hidden="true"
+          >
+            <div className="mb-4 h-4 w-2/3 rounded bg-gray-200" />
+            <div className="space-y-3">
+              <div className="h-9 w-full rounded-lg bg-gray-200" />
+              <div className="h-9 w-full rounded-lg bg-gray-200" />
+              <div className="h-9 w-4/5 rounded-lg bg-gray-200" />
+              <div className="h-9 w-11/12 rounded-lg bg-gray-200" />
+            </div>
+          </aside>
+        ) : (
+          <CategoryFilter
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectedCategoryChange={handleSelectedCategoryChange}
+          />
+        )}
         <section className="min-w-0 flex-1">
           <FilterBar
             searchQuery={searchQuery}
@@ -274,40 +311,66 @@ export default function CatalogPage() {
             onInStockOnlyChange={handleInStockOnlyChange}
             resultCount={filteredProducts.length}
           />
-          {filteredProducts.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-gray-400 text-lg">No products match your filters</p>
+          {loading ? (
+            <div role="status" aria-busy="true">
+              <span className="sr-only">Loading products</span>
+              <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }, (_, index) => (
+                  <ProductCardSkeleton key={index} />
+                ))}
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+              <p role="alert" className="text-gray-700">
+                {error}
+              </p>
               <button
                 type="button"
-                onClick={clearFilters}
+                onClick={() => void loadProducts()}
                 className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
               >
-                Clear filters
+                Try again
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {visibleProducts.map((product, index) => (
-                <ProductCard
-                  key={product.originalRowIndex}
-                  product={product}
-                  eagerImage={index < EAGER_PRODUCT_IMAGE_COUNT}
-                />
-              ))}
-            </div>
-          )}
-          {visibleProducts.length < filteredProducts.length && (
-            <div className="mt-8 text-center">
-              <button
-                type="button"
-                onClick={() =>
-                  setVisibleProductCount((count) => count + PRODUCTS_PER_BATCH)
-                }
-                className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
-              >
-                Load more
-              </button>
-            </div>
+            <>
+              {filteredProducts.length === 0 ? (
+                <div className="text-center py-16">
+                  <p className="text-gray-400 text-lg">No products match your filters</p>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {visibleProducts.map((product, index) => (
+                    <ProductCard
+                      key={product.originalRowIndex}
+                      product={product}
+                      eagerImage={index < EAGER_PRODUCT_IMAGE_COUNT}
+                    />
+                  ))}
+                </div>
+              )}
+              {visibleProducts.length < filteredProducts.length && (
+                <div className="mt-8 text-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVisibleProductCount((count) => count + PRODUCTS_PER_BATCH)
+                    }
+                    className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                  >
+                    Load more
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </section>
       </main>
