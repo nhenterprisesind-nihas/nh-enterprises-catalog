@@ -12,7 +12,7 @@ import React, {
 export interface Product {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   category: string;
   mrp: number;
   retail_price: number;

@@ -51,7 +51,7 @@ export function parseProducts(csvText: string): Product[] {
     return {
       id,
       name,
-      description: "",
+      description: row.description?.trim() || undefined,
       category: row.category?.trim() || "",
       mrp: parseFloat(row.mrp) || 0,
       retail_price: parseFloat(row.retail_price) || 0,

@@ -125,7 +125,7 @@ export default function CatalogPage() {
       (product) =>
         normalizedSearch === "" ||
         product.name.toLowerCase().includes(normalizedSearch) ||
-        product.description.toLowerCase().includes(normalizedSearch)
+        (product.description || "").toLowerCase().includes(normalizedSearch)
     );
     const categoryFilteredProducts = searchedProducts.filter(
       (product) =>
