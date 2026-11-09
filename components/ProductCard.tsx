@@ -41,9 +41,10 @@ function ZoomInIcon({ className }: { className?: string }) {
 
 interface ProductCardProps {
   product: Product;
+  eagerImage: boolean;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+function ProductCard({ product, eagerImage }: ProductCardProps) {
   const { addToCart } = useCart();
   const [selectedPrice, setSelectedPrice] = useState<"retail" | "wholesale">("retail");
   const [quantity, setQuantity] = useState(1);
@@ -145,6 +146,10 @@ export default function ProductCard({ product }: ProductCardProps) {
                         src={url}
                         alt={`${product.name} - Image ${idx + 1}`}
                         className="w-full h-full object-cover cursor-pointer"
+                        width={400}
+                        height={192}
+                        loading={eagerImage && idx === 0 ? "eager" : "lazy"}
+                        decoding="async"
                         onError={() => handleImageError(idx)}
                         onClick={() => openGallery(idx)}
                       />
@@ -317,6 +322,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   );
 }
 
+export default React.memo(ProductCard);
+
 interface ImageGalleryModalProps {
   images: string[];
   initialIndex: number;
@@ -369,6 +376,10 @@ function ImageGalleryModal({ images, initialIndex, productName, onClose }: Image
           src={images[currentIndex]}
           alt={`${productName} - Image ${currentIndex + 1}`}
           className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+          width={800}
+          height={600}
+          loading="lazy"
+          decoding="async"
         />
       </div>
 
@@ -405,6 +416,10 @@ function ImageGalleryModal({ images, initialIndex, productName, onClose }: Image
                 src={url}
                 alt={`Thumbnail ${idx + 1}`}
                 className="w-full h-full object-cover"
+                width={56}
+                height={56}
+                loading="lazy"
+                decoding="async"
               />
             </button>
           ))}

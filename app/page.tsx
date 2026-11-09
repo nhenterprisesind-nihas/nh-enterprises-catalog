@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import Papa from "papaparse";
 import ProductCard from "@/components/ProductCard";
 import Cart from "@/components/Cart";
@@ -11,6 +17,9 @@ import FilterBar, {
   type SortOption,
 } from "@/components/FilterBar";
 
+const PRODUCTS_PER_BATCH = 24;
+const EAGER_PRODUCT_IMAGE_COUNT = 6;
+
 export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +28,12 @@ export default function CatalogPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("newest");
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [visibleProductCount, setVisibleProductCount] = useState(PRODUCTS_PER_BATCH);
+
+  const deferredSelectedCategory = useDeferredValue(selectedCategory);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const deferredSortOption = useDeferredValue(sortOption);
+  const deferredInStockOnly = useDeferredValue(inStockOnly);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -107,7 +122,7 @@ export default function CatalogPage() {
   }, [products]);
 
   const filteredProducts = useMemo(() => {
-    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const normalizedSearch = deferredSearchQuery.trim().toLowerCase();
     const searchedProducts = products.filter(
       (product) =>
         normalizedSearch === "" ||
@@ -116,17 +131,20 @@ export default function CatalogPage() {
     );
     const categoryFilteredProducts = searchedProducts.filter(
       (product) =>
-        selectedCategory === null ||
-        product.category.trim().toLowerCase() === selectedCategory
+        deferredSelectedCategory === null ||
+        product.category.trim().toLowerCase() === deferredSelectedCategory
     );
-    const stockFilteredProducts = inStockOnly
+    const stockFilteredProducts = deferredInStockOnly
       ? categoryFilteredProducts.filter(
           (product) => Number.isFinite(product.stock) && product.stock > 0
         )
       : categoryFilteredProducts;
 
     return [...stockFilteredProducts].sort((a, b) => {
-      if (sortOption === "price-low-to-high" || sortOption === "price-high-to-low") {
+      if (
+        deferredSortOption === "price-low-to-high" ||
+        deferredSortOption === "price-high-to-low"
+      ) {
         const aMissingPrice = !Number.isFinite(a.retail_price) || a.retail_price === 0;
         const bMissingPrice = !Number.isFinite(b.retail_price) || b.retail_price === 0;
         if (aMissingPrice !== bMissingPrice) {
@@ -134,13 +152,13 @@ export default function CatalogPage() {
         }
 
         const priceOrder =
-          sortOption === "price-low-to-high"
+          deferredSortOption === "price-low-to-high"
             ? a.retail_price - b.retail_price
             : b.retail_price - a.retail_price;
         return priceOrder || b.originalRowIndex - a.originalRowIndex;
       }
 
-      if (sortOption === "name-a-to-z") {
+      if (deferredSortOption === "name-a-to-z") {
         return (
           a.name.localeCompare(b.name, undefined, { sensitivity: "base" }) ||
           b.originalRowIndex - a.originalRowIndex
@@ -149,14 +167,43 @@ export default function CatalogPage() {
 
       return b.originalRowIndex - a.originalRowIndex;
     });
-  }, [products, searchQuery, selectedCategory, inStockOnly, sortOption]);
+  }, [
+    products,
+    deferredSearchQuery,
+    deferredSelectedCategory,
+    deferredInStockOnly,
+    deferredSortOption,
+  ]);
 
-  const clearFilters = () => {
+  const handleSearchQueryChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setVisibleProductCount(PRODUCTS_PER_BATCH);
+  }, []);
+
+  const handleSelectedCategoryChange = useCallback((value: string | null) => {
+    setSelectedCategory(value);
+    setVisibleProductCount(PRODUCTS_PER_BATCH);
+  }, []);
+
+  const handleSortOptionChange = useCallback((value: SortOption) => {
+    setSortOption(value);
+    setVisibleProductCount(PRODUCTS_PER_BATCH);
+  }, []);
+
+  const handleInStockOnlyChange = useCallback((value: boolean) => {
+    setInStockOnly(value);
+    setVisibleProductCount(PRODUCTS_PER_BATCH);
+  }, []);
+
+  const clearFilters = useCallback(() => {
     setSearchQuery("");
     setSelectedCategory(null);
     setInStockOnly(false);
     setSortOption("newest");
-  };
+    setVisibleProductCount(PRODUCTS_PER_BATCH);
+  }, []);
+
+  const visibleProducts = filteredProducts.slice(0, visibleProductCount);
 
   if (loading) {
     return (
@@ -211,14 +258,14 @@ export default function CatalogPage() {
             </div>
             <FilterBar
               searchQuery={searchQuery}
-              onSearchQueryChange={setSearchQuery}
+              onSearchQueryChange={handleSearchQueryChange}
               sortOption={sortOption}
-              onSortOptionChange={setSortOption}
+              onSortOptionChange={handleSortOptionChange}
               inStockOnly={inStockOnly}
-              onInStockOnlyChange={setInStockOnly}
+              onInStockOnlyChange={handleInStockOnlyChange}
               categories={categories}
               selectedCategory={selectedCategory}
-              onSelectedCategoryChange={setSelectedCategory}
+              onSelectedCategoryChange={handleSelectedCategoryChange}
               resultCount={filteredProducts.length}
             />
           </div>
@@ -239,9 +286,26 @@ export default function CatalogPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.name} product={product} />
+              {visibleProducts.map((product, index) => (
+                <ProductCard
+                  key={product.originalRowIndex}
+                  product={product}
+                  eagerImage={index < EAGER_PRODUCT_IMAGE_COUNT}
+                />
               ))}
+            </div>
+          )}
+          {visibleProducts.length < filteredProducts.length && (
+            <div className="mt-8 text-center">
+              <button
+                type="button"
+                onClick={() =>
+                  setVisibleProductCount((count) => count + PRODUCTS_PER_BATCH)
+                }
+                className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+              >
+                Load more
+              </button>
             </div>
           )}
         </div>
