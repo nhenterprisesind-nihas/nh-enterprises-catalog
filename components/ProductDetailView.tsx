@@ -3,11 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { getAvailableStock, Product, useCart } from "@/context/CartContext";
-import { getProductUrl, getWhatsAppShareUrl } from "@/lib/share";
+import { getWhatsAppShareUrl } from "@/lib/share";
+import { buildProductMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 import { trackEvent } from "@/lib/trackEvent";
-
-const whatsappNumber =
-  process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919999999999";
 
 function formatPrice(price: number): string {
   return `₹${price.toLocaleString("en-IN")}`;
@@ -39,10 +37,7 @@ export default function ProductDetailView({
     mrp !== null && retailPrice !== null
       ? Math.round(((mrp - retailPrice) / mrp) * 100)
       : 0;
-  const productUrl = getProductUrl(product.id);
-  const whatsappOrderUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    `Hi, I'm interested in ${product.name} – ${productUrl}`
-  )}`;
+  const whatsappOrderUrl = getWhatsAppUrl(buildProductMessage(product));
 
   const addProductToCart = () => {
     if (!isOutOfStock) {

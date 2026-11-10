@@ -1,15 +1,18 @@
 "use client";
 
 import { trackEvent } from "@/lib/trackEvent";
-
-const whatsappNumber =
-  process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919999999999";
-const message = encodeURIComponent("Hi, I'm interested in your products.");
+import { useWhatsAppProduct } from "@/context/WhatsAppProductContext";
+import { buildProductMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 
 export default function WhatsAppButton() {
+  const { product } = useWhatsAppProduct();
+  const message = product
+    ? buildProductMessage(product)
+    : "Hi, I'm interested in your products.";
+
   return (
     <a
-      href={`https://wa.me/${whatsappNumber}?text=${message}`}
+      href={getWhatsAppUrl(message)}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"

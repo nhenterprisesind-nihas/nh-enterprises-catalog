@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { CartProvider } from "@/context/CartContext";
+import { WhatsAppProductProvider } from "@/context/WhatsAppProductContext";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import "./globals.css";
 
@@ -26,10 +27,12 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen font-sans antialiased bg-gray-50">
-        <CartProvider>
-          {children}
-          <WhatsAppButton />
-        </CartProvider>
+        <WhatsAppProductProvider>
+          <CartProvider>
+            {children}
+            <WhatsAppButton />
+          </CartProvider>
+        </WhatsAppProductProvider>
         <Analytics />
       </body>
     </html>

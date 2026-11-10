@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Cart from "@/components/Cart";
 import ProductDetailView from "@/components/ProductDetailView";
 import ReconcileCartProducts from "@/components/ReconcileCartProducts";
+import SetWhatsAppProduct from "@/components/SetWhatsAppProduct";
 import { getProducts } from "@/lib/products";
 
 export const revalidate = 300;
@@ -99,6 +100,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.name}
           </span>
         </nav>
+        <SetWhatsAppProduct product={product} />
         <ProductDetailView product={product} />
         {recommendations.length > 0 && (
           <section className="mt-12">
