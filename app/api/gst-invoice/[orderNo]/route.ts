@@ -7,6 +7,7 @@ import {
   calculateIgst,
   getGstRate,
 } from "@/lib/gst";
+import { normalizeStatus } from "@/lib/order-status";
 import path from "path";
 
 export const dynamic = "force-dynamic";
@@ -373,7 +374,7 @@ export async function GET(
   // ==================================================
 
   const {
-    data: order,
+    data: fetchedOrder,
     error: orderError,
   } = await supabaseAdmin
     .from("orders")
@@ -383,7 +384,7 @@ export async function GET(
 
   if (
     orderError ||
-    !order
+    !fetchedOrder
   ) {
     return NextResponse.json(
       {
@@ -394,6 +395,10 @@ export async function GET(
       }
     );
   }
+  const order = {
+    ...fetchedOrder,
+    status: normalizeStatus(fetchedOrder.status),
+  };
 
   // ==================================================
   // GET ORDER ITEMS

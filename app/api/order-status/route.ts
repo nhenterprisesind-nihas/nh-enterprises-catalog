@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import {
+  normalizeStatus,
+  ORDER_STATUS,
+  type OrderStatus,
+} from "@/lib/order-status";
 
 export async function PATCH(request: NextRequest) {
   try {
     const { orderNo, status } = await request.json();
 
-    const allowedStatus = [
-      "Placed",
-      "Accepted",
-      "Dispatched",
-      "Closed",
-      "Cancelled",
-    ];
+    const allowedStatus = Object.values(ORDER_STATUS);
 
     if (!allowedStatus.includes(status)) {
       return NextResponse.json(
@@ -34,17 +33,21 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const workflow: Record<string, string[]> = {
-          Placed: ["Accepted", "Cancelled"],
-          Accepted: ["Dispatched"],
-          Dispatched: ["Closed"],
+    const workflow: Record<string, OrderStatus[]> = {
+      [ORDER_STATUS.PLACED]: [
+        ORDER_STATUS.ACCEPTED,
+        ORDER_STATUS.CANCELLED,
+      ],
+      [ORDER_STATUS.ACCEPTED]: [ORDER_STATUS.DISPATCHED],
+      [ORDER_STATUS.DISPATCHED]: [ORDER_STATUS.COMPLETE],
     };
 
-    const allowedNext = workflow[currentOrder.status] || [];
+    const currentStatus = normalizeStatus(currentOrder.status);
+    const allowedNext = workflow[currentStatus] || [];
     if (!allowedNext.includes(status)) {
       return NextResponse.json(
         {
-          error: `Invalid workflow transition from ${currentOrder.status} to ${status}`,
+          error: `Invalid workflow transition from ${currentStatus} to ${status}`,
         },
         {
           status: 400,
@@ -71,7 +74,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      order: data,
+      order: data && { ...data, status: normalizeStatus(data.status) },
     });
 
   } catch (error) {

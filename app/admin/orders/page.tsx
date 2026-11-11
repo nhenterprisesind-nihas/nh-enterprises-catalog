@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ORDER_STATUS, type OrderStatus } from "@/lib/order-status";
 
 interface Order {
   order_no: string;
   customer_name: string;
   phone: string;
   grand_total: number;
-  status: string;
+  status: OrderStatus;
   created_at: string;
 }
 
@@ -110,12 +111,16 @@ export default function OrdersPage() {
                   <td className="px-5 py-4 text-center">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        order.status === "Placed"
+                        order.status === ORDER_STATUS.PLACED
                           ? "bg-yellow-100 text-yellow-800"
-                          : order.status === "Accepted"
+                          : order.status === ORDER_STATUS.ACCEPTED
                           ? "bg-blue-100 text-blue-800"
-                          : order.status === "Dispatched"
+                          : order.status === ORDER_STATUS.DISPATCHED
                           ? "bg-orange-100 text-orange-800"
+                          : order.status === ORDER_STATUS.CANCELLED
+                          ? "bg-red-100 text-red-800"
+                          : order.status === ORDER_STATUS.COMPLETE
+                          ? "bg-green-100 text-green-800"
                           : "bg-green-100 text-green-800"
                       }`}
                     >

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { normalizeStatus, ORDER_STATUS } from "@/lib/order-status";
 
 export async function GET() {
   try {
@@ -15,7 +16,12 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(
+      data?.map((order) => ({
+        ...order,
+        status: normalizeStatus(order.status),
+      }))
+    );
 
   } catch (err) {
 
@@ -60,7 +66,7 @@ export async function POST(request: Request) {
           subtotal,
           shipping,
           grand_total: grandTotal,
-          status: "Placed",
+          status: ORDER_STATUS.PLACED,
         },
       ]);
 

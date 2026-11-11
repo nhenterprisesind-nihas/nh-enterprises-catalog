@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { normalizeStatus } from "@/lib/order-status";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -11,18 +12,22 @@ export async function GET(
     const {orderNo} = await params;
 
     // Get Order Header
-    const { data: order, error: orderError } = await supabaseAdmin
+    const { data: fetchedOrder, error: orderError } = await supabaseAdmin
       .from("orders")
       .select("*")
       .eq("order_no", orderNo)
       .single();
 
-    if (orderError) {
+    if (orderError || !fetchedOrder) {
       return NextResponse.json(
-        { error: orderError.message },
-        { status: 500 }
+        { error: orderError?.message ?? "Order not found." },
+        { status: orderError ? 500 : 404 }
       );
     }
+    const order = {
+      ...fetchedOrder,
+      status: normalizeStatus(fetchedOrder.status),
+    };
 
     // Get Order Items
     const { data: items, error: itemsError } = await supabaseAdmin

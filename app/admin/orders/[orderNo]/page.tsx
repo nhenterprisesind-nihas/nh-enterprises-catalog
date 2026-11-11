@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { use } from "react";
+import { ORDER_STATUS, type OrderStatus } from "@/lib/order-status";
 
 interface Order {
   order_no: string;
@@ -13,7 +14,7 @@ interface Order {
   subtotal: number;
   shipping: number;
   grand_total: number;
-  status: string;
+  status: OrderStatus;
   created_at: string;
 }
 
@@ -66,7 +67,7 @@ export default function OrderDetailsPage({
     }
   }
 
-  async function updateStatus(newStatus: string) {
+  async function updateStatus(newStatus: OrderStatus) {
     try {
       setUpdating(true);
 
@@ -91,9 +92,7 @@ export default function OrderDetailsPage({
 
       setOrder(result.order);
 
-      setSuccessMessage(
-        `Order ${newStatus} successfully.`
-      );
+      setSuccessMessage(`Order status updated to ${newStatus}.`);
 
       setTimeout(() => {
         setSuccessMessage("");
@@ -242,14 +241,16 @@ export default function OrderDetailsPage({
 
             <span
               className={`inline-block rounded-full px-3 py-1 text-sm font-semibold ${
-                order.status === "Placed"
+                order.status === ORDER_STATUS.PLACED
                   ? "bg-yellow-100 text-yellow-800"
-                  : order.status === "Accepted"
+                  : order.status === ORDER_STATUS.ACCEPTED
                   ? "bg-blue-100 text-blue-800"
-                  : order.status === "Dispatched"
+                  : order.status === ORDER_STATUS.DISPATCHED
                   ? "bg-orange-100 text-orange-800"
-                  : order.status === "Cancelled"
+                  : order.status === ORDER_STATUS.CANCELLED
                   ? "bg-red-100 text-red-700"
+                  : order.status === ORDER_STATUS.COMPLETE
+                  ? "bg-green-100 text-green-800"
                   : "bg-green-100 text-green-800"
               }`}
             >
@@ -260,12 +261,12 @@ export default function OrderDetailsPage({
 
               {/* Placed */}
 
-              {order.status === "Placed" && (
+              {order.status === ORDER_STATUS.PLACED && (
                 <div className="flex gap-3">
 
                   <button
                     onClick={() =>
-                      updateStatus("Accepted")
+                      updateStatus(ORDER_STATUS.ACCEPTED)
                     }
                     disabled={updating}
                     className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
@@ -282,7 +283,7 @@ export default function OrderDetailsPage({
                           "Are you sure you want to cancel this order?"
                         )
                       ) {
-                        updateStatus("Cancelled");
+                        updateStatus(ORDER_STATUS.CANCELLED);
                       }
                     }}
                     disabled={updating}
@@ -298,10 +299,10 @@ export default function OrderDetailsPage({
 
               {/* Accepted */}
 
-              {order.status === "Accepted" && (
+              {order.status === ORDER_STATUS.ACCEPTED && (
                 <button
                   onClick={() =>
-                    updateStatus("Dispatched")
+                    updateStatus(ORDER_STATUS.DISPATCHED)
                   }
                   disabled={updating}
                   className="rounded bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
@@ -314,25 +315,25 @@ export default function OrderDetailsPage({
 
               {/* Dispatched */}
 
-              {order.status === "Dispatched" && (
+              {order.status === ORDER_STATUS.DISPATCHED && (
                 <button
                   onClick={() =>
-                    updateStatus("Closed")
+                    updateStatus(ORDER_STATUS.COMPLETE)
                   }
                   disabled={updating}
                   className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
                 >
                   {updating
                     ? "Updating..."
-                    : "Close Order"}
+                    : "Complete Order"}
                 </button>
               )}
 
               {/* Cancelled */}
 
-              {order.status === "Cancelled" && (
+              {order.status === ORDER_STATUS.CANCELLED && (
                 <div className="rounded bg-red-100 px-4 py-2 font-semibold text-red-700">
-                  ✕ Order Cancelled
+                  ✕ Order {ORDER_STATUS.CANCELLED}
                 </div>
               )}
 

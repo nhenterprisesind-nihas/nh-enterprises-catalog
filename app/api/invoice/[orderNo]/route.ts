@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import PDFDocument from "pdfkit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { normalizeStatus } from "@/lib/order-status";
 import path from "path";
 
 export const dynamic = "force-dynamic";
@@ -97,18 +98,22 @@ export async function GET(
 ) {
   const { orderNo } = await params;
 
-  const { data: order, error: orderError } = await supabaseAdmin
+  const { data: fetchedOrder, error: orderError } = await supabaseAdmin
     .from("orders")
     .select("*")
     .eq("order_no", orderNo)
     .single();
 
-  if (orderError || !order) {
+  if (orderError || !fetchedOrder) {
     return NextResponse.json(
       { error: "Order not found" },
       { status: 404 }
     );
   }
+  const order = {
+    ...fetchedOrder,
+    status: normalizeStatus(fetchedOrder.status),
+  };
 
   const { data: items } = await supabaseAdmin
     .from("order_items")

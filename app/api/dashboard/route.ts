@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { normalizeStatus, ORDER_STATUS } from "@/lib/order-status";
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
 
     const range = searchParams.get("range") ?? "today";
-    const status = searchParams.get("status") ?? "All";
+    const status = normalizeStatus(searchParams.get("status") ?? "All");
 
     const now = new Date();
 
@@ -53,7 +54,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const orders = allOrders ?? [];
+    const orders = (allOrders ?? []).map((order) => ({
+      ...order,
+      status: normalizeStatus(order.status),
+    }));
 
     const todayOrders = orders.filter((o) => {
       const d = new Date(o.created_at);
@@ -73,11 +77,19 @@ export async function GET(request: NextRequest) {
     });
 
     const todayRevenue = todayOrders
-      .filter((o) => o.status?.trim().toLowerCase() !== "cancelled")
+      .filter(
+        (o) =>
+          o.status?.trim().toLowerCase() !==
+          ORDER_STATUS.CANCELLED.toLowerCase()
+      )
       .reduce((sum, o) => sum + Number(o.grand_total), 0);
 
     const totalRevenue = orders
-      .filter((o) => o.status?.trim().toLowerCase() !== "cancelled")
+      .filter(
+        (o) =>
+          o.status?.trim().toLowerCase() !==
+          ORDER_STATUS.CANCELLED.toLowerCase()
+      )
       .reduce((sum, o) => sum + Number(o.grand_total), 0);
 
     return NextResponse.json({

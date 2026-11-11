@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { normalizeStatus } from "@/lib/order-status";
 
 export async function GET() {
   try {
@@ -52,6 +53,7 @@ export async function GET() {
     (orders ?? []).forEach((o:any)=>{
       ordersSheet.addRow({
         ...o,
+        status: normalizeStatus(o.status),
         item_count: itemCount.get(o.order_no) ?? 0,
       });
     });
