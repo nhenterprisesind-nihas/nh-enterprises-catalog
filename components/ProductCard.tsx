@@ -324,7 +324,7 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
             <button
               onClick={handleAdd}
               disabled={isOutOfStock}
-              className="flex-1 bg-brand text-on-brand font-semibold text-sm px-3 py-2 rounded-lg hover:bg-brand-dark active:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              className="flex-1 bg-brand text-on-brand font-semibold text-sm px-3 py-2 rounded-lg hover:bg-brand-dark hover:text-brand-soft active:bg-brand-dark active:text-brand-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               {isOutOfStock
                 ? "Out of stock"

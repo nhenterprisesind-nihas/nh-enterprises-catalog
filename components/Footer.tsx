@@ -68,10 +68,10 @@ const footerLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-brand-dark text-on-brand mt-12">
+    <footer className="bg-brand-dark text-brand-soft mt-12">
       <div className="max-w-7xl mx-auto px-4 py-10">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold tracking-tight text-on-brand">
+          <h2 className="text-2xl font-bold tracking-tight text-brand-soft">
             Nikshas Collections
           </h2>
           <p className="text-brand-soft text-sm mt-1">
@@ -79,7 +79,7 @@ export default function Footer() {
           </p>
           <Link
             href="/testimonials"
-            className="mt-4 inline-flex rounded-lg border border-brand-soft px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand"
+            className="mt-4 inline-flex rounded-lg border border-brand-soft px-4 py-2 text-sm font-semibold text-brand-soft transition-colors hover:bg-brand hover:text-on-brand"
           >
             Read customer feedback
           </Link>

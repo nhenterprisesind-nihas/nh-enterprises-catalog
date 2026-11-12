@@ -117,7 +117,7 @@ export default function ProductDetailView({
                 aria-label={`Select product image ${index + 1}`}
                 onClick={() => setSelectedImage(index)}
                 className={`h-16 w-16 shrink-0 overflow-hidden rounded-md border-2 ${
-                  selectedImage === index ? "border-brand" : "border-gray-200"
+                  selectedImage === index ? "border-brand-dark" : "border-gray-200"
                 }`}
               >
                 <img
@@ -161,7 +161,7 @@ export default function ProductDetailView({
             <p className="text-lg font-medium text-gray-500">Price not available</p>
           )}
           {mrp !== null && retailPrice !== null && (
-            <p className="text-sm font-medium text-brand">
+            <p className="text-sm font-medium text-brand-dark">
               You save {formatPrice(mrp - retailPrice)}
             </p>
           )}
@@ -225,7 +225,7 @@ export default function ProductDetailView({
             type="button"
             onClick={addProductToCart}
             disabled={isOutOfStock}
-            className="w-full rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark hover:text-brand-soft disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isOutOfStock ? "Out of stock" : "Add to cart"}
           </button>
@@ -243,13 +243,13 @@ export default function ProductDetailView({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackEvent("wa-share-click")}
-            className="flex w-full items-center justify-center rounded-lg border border-brand px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-brand-soft"
+            className="flex w-full items-center justify-center rounded-lg border border-brand px-4 py-2.5 text-sm font-semibold text-brand-dark transition-colors hover:bg-brand-soft"
           >
             Share on WhatsApp
           </a>
           <Link
             href="/"
-            className="block pt-1 text-center text-sm font-medium text-brand hover:text-brand-dark"
+            className="block pt-1 text-center text-sm font-medium text-brand-dark hover:text-brand-dark"
           >
             ← Back to catalog
           </Link>

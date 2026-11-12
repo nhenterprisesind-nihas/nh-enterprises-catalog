@@ -8,7 +8,7 @@ export default function ProductNotFound() {
       </h1>
       <Link
         href="/"
-        className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark"
+        className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark hover:text-brand-soft"
       >
         Browse the catalog
       </Link>

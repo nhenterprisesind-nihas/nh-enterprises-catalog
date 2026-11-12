@@ -60,7 +60,7 @@ export default function FilterBar({
             aria-label="In stock only"
             checked={inStockOnly}
             onChange={(event) => onInStockOnlyChange(event.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
+            className="h-4 w-4 rounded border-gray-300 text-brand-dark focus:ring-brand-dark"
           />
           <span>In stock only</span>
         </label>
@@ -94,7 +94,7 @@ export default function FilterBar({
             aria-label="In stock only"
             checked={inStockOnly}
             onChange={(event) => onInStockOnlyChange(event.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
+            className="h-4 w-4 rounded border-gray-300 text-brand-dark focus:ring-brand-dark"
           />
           <span>In stock only</span>
         </label>

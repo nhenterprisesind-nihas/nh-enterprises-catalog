@@ -13,6 +13,83 @@
   --ink: 42 21 32;
 }
 
+[data-theme="deepavali"] {
+  --brand: 194 65 12;
+  --brand-dark: 31 17 71;
+  --brand-soft: 255 241 214;
+  --accent: 255 194 26;
+  --on-brand: 255 255 255;
+  --on-accent: 42 20 5;
+  --surface: 255 250 235;
+  --ink: 42 20 5;
+}
+
+[data-theme="navaratri"] {
+  --brand: 183 28 28;
+  --brand-dark: 74 10 10;
+  --brand-soft: 253 236 234;
+  --accent: 224 161 0;
+  --on-brand: 255 255 255;
+  --on-accent: 43 29 0;
+  --surface: 255 248 240;
+  --ink: 42 15 15;
+}
+
+[data-theme="pongal"] {
+  --brand: 242 169 0;
+  --brand-dark: 59 42 6;
+  --brand-soft: 255 244 204;
+  --accent: 46 125 50;
+  --on-brand: 43 26 0;
+  --on-accent: 255 255 255;
+  --surface: 255 252 242;
+  --ink: 43 26 0;
+}
+
+[data-theme="holi"] {
+  --brand: 109 40 217;
+  --brand-dark: 46 16 101;
+  --brand-soft: 243 232 255;
+  --accent: 255 214 10;
+  --on-brand: 255 255 255;
+  --on-accent: 43 34 0;
+  --surface: 255 251 255;
+  --ink: 30 16 51;
+}
+
+[data-theme="christmas"] {
+  --brand: 21 128 61;
+  --brand-dark: 11 61 30;
+  --brand-soft: 220 252 231;
+  --accent: 211 47 47;
+  --on-brand: 255 255 255;
+  --on-accent: 255 255 255;
+  --surface: 255 253 248;
+  --ink: 15 42 25;
+}
+
+[data-theme="tricolour"] {
+  --brand: 29 78 216;
+  --brand-dark: 11 31 91;
+  --brand-soft: 232 238 255;
+  --accent: 255 153 51;
+  --on-brand: 255 255 255;
+  --on-accent: 43 22 0;
+  --surface: 255 255 255;
+  --ink: 11 26 61;
+}
+
+[data-theme="eid"] {
+  --brand: 15 118 110;
+  --brand-dark: 4 47 46;
+  --brand-soft: 204 251 241;
+  --accent: 212 175 55;
+  --on-brand: 255 255 255;
+  --on-accent: 42 34 0;
+  --surface: 250 255 253;
+  --ink: 5 46 43;
+}
+
 @layer base {
   body {
     @apply bg-surface text-ink;
@@ -22,7 +99,8 @@
 @layer components {
   .btn-gold {
     @apply bg-brand text-on-brand font-semibold px-4 py-2 rounded-lg
-           hover:bg-brand-dark active:bg-brand-dark transition-colors duration-200
+           hover:bg-brand-dark hover:text-brand-soft active:bg-brand-dark
+           active:text-brand-soft transition-colors duration-200
            shadow-sm hover:shadow-md;
   }
 

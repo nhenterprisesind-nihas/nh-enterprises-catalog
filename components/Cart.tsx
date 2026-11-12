@@ -160,7 +160,7 @@ const handleSubmitOrder = async () => {
       {/* Cart Toggle Button */}
       <button
         onClick={() => setIsCartOpen(true)}
-        className="fixed bottom-6 right-6 z-40 bg-brand text-on-brand w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-brand-dark transition-all hover:scale-105"
+        className="fixed bottom-6 right-6 z-40 bg-brand text-on-brand w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-brand-dark hover:text-brand-soft transition-all hover:scale-105"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -191,7 +191,7 @@ const handleSubmitOrder = async () => {
             {/* Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-10">
               <h2 className="text-gray-900 font-bold text-lg flex items-center gap-2">
-                <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-brand-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

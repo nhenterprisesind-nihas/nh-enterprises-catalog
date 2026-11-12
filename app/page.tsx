@@ -11,6 +11,7 @@ import React, {
 import ProductCard from "@/components/ProductCard";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import Cart from "@/components/Cart";
+import FestivalBanner from "@/components/FestivalBanner";
 import { Product, useCart } from "@/context/CartContext";
 import Footer from "@/components/Footer";
 import FilterBar, {
@@ -220,7 +221,7 @@ export default function CatalogPage() {
               )}
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-on-brand sm:text-2xl">
+              <h1 className="text-xl font-bold tracking-tight text-brand-soft sm:text-2xl">
                 Nikshas Collections
               </h1>
               <p className="text-xs text-brand-soft">
@@ -230,6 +231,7 @@ export default function CatalogPage() {
           </div>
         </div>
       </header>
+      <FestivalBanner />
       <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 md:flex-row md:items-start">
         {loading ? (
           <aside
@@ -278,7 +280,7 @@ export default function CatalogPage() {
               <button
                 type="button"
                 onClick={() => void loadProducts()}
-                className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark"
+                className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark hover:text-brand-soft"
               >
                 Try again
               </button>
@@ -291,7 +293,7 @@ export default function CatalogPage() {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark"
+                    className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark hover:text-brand-soft"
                   >
                     Clear filters
                   </button>
@@ -314,7 +316,7 @@ export default function CatalogPage() {
                     onClick={() =>
                       setVisibleProductCount((count) => count + PRODUCTS_PER_BATCH)
                     }
-                    className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark"
+                    className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark hover:text-brand-soft"
                   >
                     Load more
                   </button>

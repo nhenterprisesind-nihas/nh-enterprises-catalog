@@ -85,6 +85,16 @@ npm start
 
 The app will automatically redeploy when you push changes.
 
+## Festival Themes
+
+The site selects a festival theme using the date in the Asia/Kolkata time zone.
+Preview a theme for the current browser session with a URL such as
+`/?theme=pongal`; supported names are `base`, `deepavali`, `navaratri`,
+`pongal`, `holi`, `christmas`, `tricolour`, and `eid`. The optional
+`NEXT_PUBLIC_FORCE_THEME` environment variable overrides the schedule and URL
+preview. Deepavali, Navaratri, Holi, and Eid date ranges are intentionally empty
+in `lib/festivalThemes.ts` until their dates are added each year.
+
 ## How It Works
 
 1. **Data Fetching**: On page load, the app fetches the CSV from your published Google Sheet
