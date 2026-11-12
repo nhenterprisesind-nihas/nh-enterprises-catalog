@@ -11,7 +11,6 @@ import React, {
 import ProductCard from "@/components/ProductCard";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import Cart from "@/components/Cart";
-import FestivalBanner from "@/components/FestivalBanner";
 import { Product, useCart } from "@/context/CartContext";
 import Footer from "@/components/Footer";
 import FilterBar, {
@@ -31,6 +30,7 @@ export default function CatalogPage() {
   const { reconcileProducts } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasReadInitialCategoryRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -120,6 +120,44 @@ export default function CatalogPage() {
       (a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
     );
   }, [products]);
+
+  useEffect(() => {
+    if (loading || hasReadInitialCategoryRef.current) return;
+
+    hasReadInitialCategoryRef.current = true;
+    const requestedCategory = new URLSearchParams(window.location.search)
+      .get("category")
+      ?.trim()
+      .toLowerCase();
+    if (!requestedCategory) return;
+
+    const matchedCategory = categories.find(
+      (category) => category.key === requestedCategory
+    );
+    if (matchedCategory) {
+      setSelectedCategory(matchedCategory.key);
+    }
+  }, [categories, loading]);
+
+  useEffect(() => {
+    const handleBannerCategory = (event: Event) => {
+      if (!(event instanceof CustomEvent) || typeof event.detail !== "string") {
+        return;
+      }
+
+      const requestedCategory = event.detail.trim().toLowerCase();
+      const matchedCategory = categories.find(
+        (category) => category.key === requestedCategory
+      );
+      if (matchedCategory) {
+        setSelectedCategory(matchedCategory.key);
+      }
+    };
+
+    window.addEventListener("catalog-banner-category", handleBannerCategory);
+    return () =>
+      window.removeEventListener("catalog-banner-category", handleBannerCategory);
+  }, [categories]);
 
   const filteredProducts = useMemo(() => {
     const normalizedSearch = deferredSearchQuery.trim().toLowerCase();
@@ -232,7 +270,6 @@ export default function CatalogPage() {
           </div>
         </div>
       </header>
-      <FestivalBanner />
       <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 md:flex-row md:items-start">
         {loading ? (
           <aside

@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { CartProvider } from "@/context/CartContext";
 import { WhatsAppProductProvider } from "@/context/WhatsAppProductContext";
 import { createThemeBootstrapScript } from "@/lib/festivalThemes";
+import BannerBar from "@/components/BannerBar";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import "./globals.css";
 
@@ -35,6 +36,7 @@ export default function RootLayout({
       <body className="min-h-screen font-sans antialiased bg-surface text-ink">
         <WhatsAppProductProvider>
           <CartProvider>
+            <BannerBar />
             {children}
             <WhatsAppButton />
           </CartProvider>
