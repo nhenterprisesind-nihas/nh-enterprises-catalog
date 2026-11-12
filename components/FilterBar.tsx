@@ -49,8 +49,8 @@ export default function FilterBar({
           onChange={(event) => onSortOptionChange(event.target.value as SortOption)}
           className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand"
         >
-          <option value="newest">Newest first</option>
           <option value="price-low-to-high">Price: Low to High</option>
+          <option value="newest">Newest first</option>
           <option value="price-high-to-low">Price: High to Low</option>
           <option value="name-a-to-z">Name: A to Z</option>
         </select>
@@ -83,8 +83,8 @@ export default function FilterBar({
           onChange={(event) => onSortOptionChange(event.target.value as SortOption)}
           className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand sm:w-auto"
         >
-          <option value="newest">Newest first</option>
           <option value="price-low-to-high">Price: Low to High</option>
+          <option value="newest">Newest first</option>
           <option value="price-high-to-low">Price: High to Low</option>
           <option value="name-a-to-z">Name: A to Z</option>
         </select>

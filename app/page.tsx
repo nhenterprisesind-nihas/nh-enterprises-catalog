@@ -23,6 +23,7 @@ import { parseProducts } from "@/lib/products";
 
 const PRODUCTS_PER_BATCH = 24;
 const EAGER_PRODUCT_IMAGE_COUNT = 6;
+const DEFAULT_SORT: SortOption = "price-low-to-high";
 const PRODUCT_LOAD_ERROR =
   "Couldn't load products. Please check your connection and try again.";
 
@@ -33,7 +34,7 @@ export default function CatalogPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState<SortOption>("newest");
+  const [sortOption, setSortOption] = useState<SortOption>(DEFAULT_SORT);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [visibleProductCount, setVisibleProductCount] = useState(PRODUCTS_PER_BATCH);
   const isMountedRef = useRef(false);
@@ -198,7 +199,7 @@ export default function CatalogPage() {
     setSearchQuery("");
     setSelectedCategory(null);
     setInStockOnly(false);
-    setSortOption("newest");
+    setSortOption(DEFAULT_SORT);
     setVisibleProductCount(PRODUCTS_PER_BATCH);
   }, []);
 
