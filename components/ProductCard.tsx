@@ -125,7 +125,7 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow duration-200">
         <div className="relative w-full h-48 bg-gray-100 overflow-hidden group">
         {discountPercent > 0 && (
-          <div className="absolute top-2 left-2 z-20 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow">
+          <div className="absolute top-2 left-2 z-20 bg-accent text-on-accent text-xs font-bold px-2 py-1 rounded-full shadow">
             {discountPercent}% OFF
         </div>
        )}
@@ -210,7 +210,7 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
             </div>
           )}
 
-          <span className="absolute top-2 left-2 bg-emerald-600 text-white text-xs font-medium px-2 py-0.5 rounded-md z-10">
+          <span className="absolute top-2 left-2 bg-white/90 text-ink text-xs font-medium px-2 py-0.5 rounded-md z-10">
             {product.category || "Uncategorized"}
           </span>
           <a
@@ -259,8 +259,8 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
                 onClick={() => setSelectedPrice("retail")}
                 className={`text-center p-2 rounded-md text-xs transition-all ${
                   selectedPrice === "retail"
-                    ? "bg-emerald-600 text-white font-bold"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-brand text-on-brand font-bold"
+                    : "bg-brand-soft text-ink hover:bg-brand-soft"
                 }`}
               >
                 <div className="font-medium">Retail</div>
@@ -275,8 +275,8 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
                 }}
                 className={`text-center p-2 rounded-md text-xs transition-all ${
                   selectedPrice === "wholesale"
-                    ? "bg-emerald-600 text-white font-bold"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-brand text-on-brand font-bold"
+                    : "bg-brand-soft text-ink hover:bg-brand-soft"
                 }`}
               >
                 <div className="font-medium">Wholesale</div>
@@ -311,7 +311,7 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
                     setQuantity(Math.min(Math.max(quantity, 1), availableStock));
                   }
                 }}
-                className="w-12 text-center text-sm text-gray-800 border-x border-gray-200 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-12 text-center text-sm text-gray-800 border-x border-gray-200 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <button
                 onClick={() => setQuantity(Math.min(quantity + 1, availableStock))}
@@ -324,7 +324,7 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
             <button
               onClick={handleAdd}
               disabled={isOutOfStock}
-              className="flex-1 bg-emerald-600 text-white font-semibold text-sm px-3 py-2 rounded-lg hover:bg-emerald-700 active:bg-emerald-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              className="flex-1 bg-brand text-on-brand font-semibold text-sm px-3 py-2 rounded-lg hover:bg-brand-dark active:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               {isOutOfStock
                 ? "Out of stock"
@@ -438,7 +438,7 @@ function ImageGalleryModal({ images, initialIndex, productName, onClose }: Image
               onClick={() => setCurrentIndex(idx)}
               className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
                 idx === currentIndex
-                  ? "border-emerald-400 scale-110 shadow-lg"
+                  ? "border-brand scale-110 shadow-lg"
                   : "border-transparent opacity-60 hover:opacity-100"
               }`}
             >

@@ -46,7 +46,7 @@ export default async function AdminLayout({
             href="/admin"
             className={`block rounded-lg px-4 py-3 transition ${
               isDashboard
-                ? "bg-blue-600 text-white"
+                ? "bg-brand text-on-brand"
                 : "hover:bg-slate-800"
             }`}
           >
@@ -57,7 +57,7 @@ export default async function AdminLayout({
             href="/admin/orders"
             className={`block rounded-lg px-4 py-3 transition ${
               isOrders
-                ? "bg-blue-600 text-white"
+                ? "bg-brand text-on-brand"
                 : "hover:bg-slate-800"
             }`}
           >
@@ -68,7 +68,7 @@ export default async function AdminLayout({
             href="/admin/testimonials"
             className={`block rounded-lg px-4 py-3 transition ${
               isTestimonials
-                ? "bg-blue-600 text-white"
+                ? "bg-brand text-on-brand"
                 : "hover:bg-slate-800"
             }`}
           >

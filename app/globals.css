@@ -2,16 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --brand: 194 24 91;
+  --brand-dark: 91 15 51;
+  --brand-soft: 253 231 240;
+  --accent: 255 179 0;
+  --on-brand: 255 255 255;
+  --on-accent: 59 35 0;
+  --surface: 255 249 243;
+  --ink: 42 21 32;
+}
+
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-surface text-ink;
   }
 }
 
 @layer components {
   .btn-gold {
-    @apply bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg
-           hover:bg-emerald-700 active:bg-emerald-800 transition-colors duration-200
+    @apply bg-brand text-on-brand font-semibold px-4 py-2 rounded-lg
+           hover:bg-brand-dark active:bg-brand-dark transition-colors duration-200
            shadow-sm hover:shadow-md;
   }
 

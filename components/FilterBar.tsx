@@ -40,14 +40,14 @@ export default function FilterBar({
         placeholder="Search products..."
         value={searchQuery}
         onChange={(event) => onSearchQueryChange(event.target.value)}
-        className="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-gray-800 placeholder-gray-400 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500 md:hidden"
+        className="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-gray-800 placeholder-gray-400 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand md:hidden"
       />
       <div className="mt-2 flex min-w-0 items-center gap-2 md:hidden">
         <select
           aria-label="Sort products"
           value={sortOption}
           onChange={(event) => onSortOptionChange(event.target.value as SortOption)}
-          className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand"
         >
           <option value="newest">Newest first</option>
           <option value="price-low-to-high">Price: Low to High</option>
@@ -60,7 +60,7 @@ export default function FilterBar({
             aria-label="In stock only"
             checked={inStockOnly}
             onChange={(event) => onInStockOnlyChange(event.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+            className="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
           />
           <span>In stock only</span>
         </label>
@@ -75,13 +75,13 @@ export default function FilterBar({
           placeholder="Search products..."
           value={searchQuery}
           onChange={(event) => onSearchQueryChange(event.target.value)}
-          className="w-full min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-gray-800 placeholder-gray-400 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-gray-800 placeholder-gray-400 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand"
         />
         <select
           aria-label="Sort products"
           value={sortOption}
           onChange={(event) => onSortOptionChange(event.target.value as SortOption)}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 sm:w-auto"
+          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand sm:w-auto"
         >
           <option value="newest">Newest first</option>
           <option value="price-low-to-high">Price: Low to High</option>
@@ -94,7 +94,7 @@ export default function FilterBar({
             aria-label="In stock only"
             checked={inStockOnly}
             onChange={(event) => onInStockOnlyChange(event.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+            className="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
           />
           <span>In stock only</span>
         </label>
@@ -134,8 +134,8 @@ export function CategoryFilter({
             aria-pressed={selectedCategory === null}
             className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-all ${
               selectedCategory === null
-                ? "bg-emerald-600 text-white shadow-sm"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                ? "bg-brand text-on-brand shadow-sm"
+                : "text-gray-600 hover:bg-brand-soft hover:text-gray-900"
             }`}
           >
             All
@@ -148,8 +148,8 @@ export function CategoryFilter({
               aria-pressed={selectedCategory === category.key}
               className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-all ${
                 selectedCategory === category.key
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  ? "bg-brand text-on-brand shadow-sm"
+                  : "text-gray-600 hover:bg-brand-soft hover:text-gray-900"
               }`}
             >
               {category.label}
@@ -245,8 +245,8 @@ function MobileCategoryChips({
           aria-pressed={selectedCategory === null}
           className={`min-h-10 shrink-0 snap-center whitespace-nowrap rounded-full px-4 text-sm font-medium transition-all ${
             selectedCategory === null
-              ? "bg-emerald-600 text-white shadow-sm"
-              : "border border-gray-200 bg-gray-100 text-gray-600 hover:bg-gray-200"
+              ? "bg-brand text-on-brand shadow-sm"
+              : "border border-gray-200 bg-brand-soft text-ink hover:bg-brand-soft"
           }`}
         >
           Categories: All
@@ -263,8 +263,8 @@ function MobileCategoryChips({
             aria-pressed={selectedCategory === category.key}
             className={`min-h-10 shrink-0 snap-center whitespace-nowrap rounded-full px-4 text-sm font-medium transition-all ${
               selectedCategory === category.key
-                ? "bg-emerald-600 text-white shadow-sm"
-                : "border border-gray-200 bg-gray-100 text-gray-600 hover:bg-gray-200"
+                ? "bg-brand text-on-brand shadow-sm"
+                : "border border-gray-200 bg-brand-soft text-ink hover:bg-brand-soft"
             }`}
           >
             {category.label}

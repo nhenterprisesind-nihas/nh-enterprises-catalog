@@ -83,10 +83,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
       : [];
 
   return (
-    <main className="min-h-screen bg-[#FDFBF7] px-4 py-8">
+    <main className="min-h-screen bg-surface px-4 py-8">
       <div className="mx-auto max-w-5xl">
         <nav aria-label="Breadcrumb" className="mb-6 text-sm text-gray-500">
-          <Link href="/" className="text-emerald-700 hover:text-emerald-800">
+          <Link href="/" className="text-brand hover:text-brand-dark">
             Home
           </Link>
           {product.category.trim() && (
@@ -134,7 +134,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                     </h3>
                     {Number.isFinite(recommendation.retail_price) &&
                       recommendation.retail_price > 0 && (
-                        <p className="mt-1 text-sm font-semibold text-emerald-700">
+                        <p className="mt-1 text-sm font-semibold text-brand">
                           ₹{recommendation.retail_price.toLocaleString("en-IN")}
                         </p>
                       )}

@@ -127,7 +127,7 @@ export default function TestimonialsList() {
       <section className="mx-auto mt-10 max-w-2xl text-center">
         <button
           onClick={() => setIsOpen(true)}
-          className="rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-800"
+          className="rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark"
         >
           Share your feedback
         </button>
@@ -167,7 +167,7 @@ export default function TestimonialsList() {
               </div>
 
               {/* Product */}
-              <p className="mt-4 text-sm font-semibold text-emerald-700">
+              <p className="mt-4 text-sm font-semibold text-brand">
                 {testimonial.product_name}
               </p>
 
@@ -354,7 +354,7 @@ export default function TestimonialsList() {
             <button
               type="submit"
               disabled={submitting}
-              className="mt-6 w-full rounded-lg bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
+              className="mt-6 w-full rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-on-brand hover:bg-brand-dark disabled:opacity-60"
             >
               {submitting
                 ? "Submitting..."

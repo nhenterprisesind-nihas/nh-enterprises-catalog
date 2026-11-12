@@ -22,15 +22,15 @@ function StarIcon() {
 
 export default function TestimonialsPage() {
   return (
-    <div className="min-h-screen bg-[#FDFBF7]">
-      <header className="border-b border-gray-200 bg-white shadow-sm">
+    <div className="min-h-screen bg-surface">
+      <header className="border-b border-gray-200 bg-brand-dark shadow-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <Link href="/" className="text-lg font-bold tracking-tight text-gray-900 sm:text-xl">
+          <Link href="/" className="text-lg font-bold tracking-tight text-on-brand sm:text-xl">
             Nikshas Collections
           </Link>
           <Link
             href="/"
-            className="rounded-lg border border-emerald-600 px-3 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50"
+            className="rounded-lg border border-brand px-3 py-2 text-sm font-medium text-on-brand transition-colors hover:bg-brand"
           >
             Browse products
           </Link>
@@ -39,7 +39,7 @@ export default function TestimonialsPage() {
 
       <main className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">
             Testimonials
           </p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">

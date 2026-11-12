@@ -13,7 +13,7 @@ export default function VisitorCounter() {
   }, []);
 
   return (
-    <p className="text-center text-emerald-300 text-xs mt-2">
+    <p className="text-center text-brand-soft text-xs mt-2">
       👁️ {count ? count.toLocaleString("en-IN") : "Loading..."} Visitors
     </p>
   );

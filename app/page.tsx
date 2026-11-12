@@ -204,11 +204,11 @@ export default function CatalogPage() {
   const visibleProducts = filteredProducts.slice(0, visibleProductCount);
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7]">
-      <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
+    <div className="min-h-screen bg-surface">
+      <header className="sticky top-0 z-30 bg-brand-dark border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-600 flex flex-shrink-0 items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-brand flex flex-shrink-0 items-center justify-center">
               {process.env.NEXT_PUBLIC_LOGO_URL ? (
                 <img
                   src={process.env.NEXT_PUBLIC_LOGO_URL}
@@ -216,14 +216,14 @@ export default function CatalogPage() {
                   className="h-10 w-10 rounded-full object-cover"
                 />
               ) : (
-                <span className="text-lg font-bold text-white">N</span>
+                <span className="text-lg font-bold text-on-brand">N</span>
               )}
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+              <h1 className="text-xl font-bold tracking-tight text-on-brand sm:text-2xl">
                 Nikshas Collections
               </h1>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-brand-soft">
                 Quality products at retail and wholesale pricing
               </p>
             </div>
@@ -278,7 +278,7 @@ export default function CatalogPage() {
               <button
                 type="button"
                 onClick={() => void loadProducts()}
-                className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark"
               >
                 Try again
               </button>
@@ -291,7 +291,7 @@ export default function CatalogPage() {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                    className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark"
                   >
                     Clear filters
                   </button>
@@ -314,7 +314,7 @@ export default function CatalogPage() {
                     onClick={() =>
                       setVisibleProductCount((count) => count + PRODUCTS_PER_BATCH)
                     }
-                    className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                    className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark"
                   >
                     Load more
                   </button>

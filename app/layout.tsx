@@ -26,7 +26,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen font-sans antialiased bg-gray-50">
+      <body className="min-h-screen font-sans antialiased bg-surface text-ink">
         <WhatsAppProductProvider>
           <CartProvider>
             {children}

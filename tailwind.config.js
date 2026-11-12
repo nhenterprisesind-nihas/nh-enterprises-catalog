@@ -8,6 +8,14 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        brand: "rgb(var(--brand) / <alpha-value>)",
+        "brand-dark": "rgb(var(--brand-dark) / <alpha-value>)",
+        "brand-soft": "rgb(var(--brand-soft) / <alpha-value>)",
+        accent: "rgb(var(--accent) / <alpha-value>)",
+        "on-brand": "rgb(var(--on-brand) / <alpha-value>)",
+        "on-accent": "rgb(var(--on-accent) / <alpha-value>)",
+        surface: "rgb(var(--surface) / <alpha-value>)",
+        ink: "rgb(var(--ink) / <alpha-value>)",
         maroon: {
           50: "#fdf2f4",
           100: "#fce7ea",

@@ -141,7 +141,7 @@ export default function OrderDetailsPage({
                     (current) => !current
                   )
                 }
-                className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                className="rounded bg-brand px-4 py-2 text-on-brand hover:bg-brand-dark"
               >
                 📄 Download
               </button>
@@ -269,7 +269,7 @@ export default function OrderDetailsPage({
                       updateStatus(ORDER_STATUS.ACCEPTED)
                     }
                     disabled={updating}
-                    className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                    className="rounded bg-brand px-4 py-2 text-on-brand hover:bg-brand-dark"
                   >
                     {updating
                       ? "Updating..."
@@ -321,7 +321,7 @@ export default function OrderDetailsPage({
                     updateStatus(ORDER_STATUS.COMPLETE)
                   }
                   disabled={updating}
-                  className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                  className="rounded bg-brand px-4 py-2 text-on-brand hover:bg-brand-dark"
                 >
                   {updating
                     ? "Updating..."

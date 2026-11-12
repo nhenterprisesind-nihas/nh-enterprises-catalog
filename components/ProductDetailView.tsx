@@ -94,7 +94,7 @@ export default function ProductDetailView({
                         aria-pressed={selectedImage === index}
                         onClick={() => setSelectedImage(index)}
                         className={`h-2.5 w-2.5 rounded-full shadow ${
-                          selectedImage === index ? "bg-emerald-600" : "bg-white"
+                          selectedImage === index ? "bg-gray-700" : "bg-white"
                         }`}
                       />
                     ))}
@@ -117,7 +117,7 @@ export default function ProductDetailView({
                 aria-label={`Select product image ${index + 1}`}
                 onClick={() => setSelectedImage(index)}
                 className={`h-16 w-16 shrink-0 overflow-hidden rounded-md border-2 ${
-                  selectedImage === index ? "border-emerald-600" : "border-gray-200"
+                  selectedImage === index ? "border-brand" : "border-gray-200"
                 }`}
               >
                 <img
@@ -151,7 +151,7 @@ export default function ProductDetailView({
                   <span className="text-base text-gray-400 line-through">
                     {formatPrice(mrp)}
                   </span>
-                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                  <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-on-accent">
                     {discountPercent}% off
                   </span>
                 </>
@@ -161,7 +161,7 @@ export default function ProductDetailView({
             <p className="text-lg font-medium text-gray-500">Price not available</p>
           )}
           {mrp !== null && retailPrice !== null && (
-            <p className="text-sm font-medium text-emerald-700">
+            <p className="text-sm font-medium text-brand">
               You save {formatPrice(mrp - retailPrice)}
             </p>
           )}
@@ -218,14 +218,14 @@ export default function ProductDetailView({
                   setQuantity(Math.min(Math.floor(nextQuantity), availableStock));
                 }
               }}
-              className="w-20 rounded-lg border border-gray-200 px-3 py-2 text-center text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100"
+              className="w-20 rounded-lg border border-gray-200 px-3 py-2 text-center text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand disabled:bg-gray-100"
             />
           </div>
           <button
             type="button"
             onClick={addProductToCart}
             disabled={isOutOfStock}
-            className="w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isOutOfStock ? "Out of stock" : "Add to cart"}
           </button>
@@ -234,7 +234,7 @@ export default function ProductDetailView({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackEvent("wa-product-order-click")}
-            className="flex w-full items-center justify-center rounded-lg bg-[#25D366] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#20BD5A]"
+            className="flex w-full items-center justify-center rounded-lg bg-[#25D366] px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#20BD5A]"
           >
             Order on WhatsApp
           </a>
@@ -243,13 +243,13 @@ export default function ProductDetailView({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackEvent("wa-share-click")}
-            className="flex w-full items-center justify-center rounded-lg border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50"
+            className="flex w-full items-center justify-center rounded-lg border border-brand px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-brand-soft"
           >
             Share on WhatsApp
           </a>
           <Link
             href="/"
-            className="block pt-1 text-center text-sm font-medium text-emerald-700 hover:text-emerald-800"
+            className="block pt-1 text-center text-sm font-medium text-brand hover:text-brand-dark"
           >
             ← Back to catalog
           </Link>

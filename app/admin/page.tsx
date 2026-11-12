@@ -117,7 +117,7 @@ export default function AdminHomePage() {
 
           <button
               onClick={exportExcel}
-              className="rounded bg-green-600 text-white px-3 py-2 whitespace-nowrap hover:bg-green-700"
+              className="rounded bg-brand text-on-brand px-3 py-2 whitespace-nowrap hover:bg-brand-dark"
             >
               📊 Download Orders
           </button>

@@ -68,18 +68,18 @@ const footerLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-emerald-900 text-white mt-12">
+    <footer className="bg-brand-dark text-on-brand mt-12">
       <div className="max-w-7xl mx-auto px-4 py-10">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold tracking-tight text-white">
+          <h2 className="text-2xl font-bold tracking-tight text-on-brand">
             Nikshas Collections
           </h2>
-          <p className="text-emerald-200 text-sm mt-1">
+          <p className="text-brand-soft text-sm mt-1">
             Quality products at retail & wholesale pricing
           </p>
           <Link
             href="/testimonials"
-            className="mt-4 inline-flex rounded-lg border border-emerald-400 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800"
+            className="mt-4 inline-flex rounded-lg border border-brand-soft px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand"
           >
             Read customer feedback
           </Link>
@@ -94,7 +94,7 @@ export default function Footer() {
       				href={link.href}
 				    target={link.href.startsWith("mailto:") ? undefined : "_blank"}
 				    rel="noopener noreferrer"
-				    className={`flex items-center gap-2 text-emerald-100 transition-colors ${link.color}`}
+				    className={`flex items-center gap-2 text-brand-soft transition-colors ${link.color}`}
     			>
       		<Icon className="w-5 h-5" />
    	   		<span className="text-sm font-medium">{link.label}</span>
@@ -102,8 +102,8 @@ export default function Footer() {
   	   );
 	})}
         </div>
-        <div className="border-t border-emerald-700 mt-8 pt-6">
-          <p className="text-center text-emerald-300 text-xs">
+        <div className="border-t border-brand mt-8 pt-6">
+          <p className="text-center text-brand-soft text-xs">
             © {new Date().getFullYear()} NH Enterprises. All rights reserved.
           </p>
           <VisitorCounter />
