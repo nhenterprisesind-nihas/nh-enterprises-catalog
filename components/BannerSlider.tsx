@@ -8,6 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import type { DealSlide } from "@/lib/dealBanners";
 import { FESTIVALS } from "@/lib/festivalThemes";
@@ -49,14 +50,22 @@ function getImageUrl(images: string[]): string | undefined {
   });
 }
 
+function getSlideKey(slide: CarouselSlide): string {
+  if (slide.type === "festival" || slide.type === "collage" || slide.type === "wholesale") {
+    return slide.type;
+  }
+  if (slide.type === "hero" || slide.type === "savings") {
+    return `${slide.type}-${slide.product.id}`;
+  }
+  return `category-${slide.category}`;
+}
+
 function ProductThumbnail({
   images,
-  name,
   eager,
   className,
 }: {
   images: string[];
-  name: string;
   eager: boolean;
   className: string;
 }) {
@@ -65,7 +74,7 @@ function ProductThumbnail({
 
   return (
     <span
-      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1 ${className}`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1 ring-2 ring-white/80 shadow-lg ${className}`}
       aria-hidden="true"
     >
       <img
@@ -77,8 +86,44 @@ function ProductThumbnail({
         decoding="async"
         className="h-full w-full object-contain"
       />
-      <span className="sr-only">{name}</span>
     </span>
+  );
+}
+
+function SlideBackdrop({
+  imageUrl,
+  tintClassName,
+  opaqueTintClassName,
+  eager,
+  onImageError,
+}: {
+  imageUrl?: string;
+  tintClassName: string;
+  opaqueTintClassName: string;
+  eager: boolean;
+  onImageError: () => void;
+}) {
+  return (
+    <>
+      {imageUrl && (
+        <img
+          src={imageUrl}
+          alt=""
+          aria-hidden="true"
+          loading={eager ? "eager" : "lazy"}
+          fetchPriority={eager ? "high" : "auto"}
+          decoding="async"
+          onError={onImageError}
+          className="absolute inset-0 z-0 h-full w-full scale-110 object-cover blur-md"
+        />
+      )}
+      <div
+        aria-hidden="true"
+        className={`absolute inset-0 z-[1] ${
+          imageUrl ? tintClassName : opaqueTintClassName
+        }`}
+      />
+    </>
   );
 }
 
@@ -91,6 +136,9 @@ export default function BannerSlider({ slides }: { slides: DealSlide[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [festivalGreeting, setFestivalGreeting] = useState("");
   const [activeSlide, setActiveSlide] = useState(0);
+  const [failedBackgrounds, setFailedBackgrounds] = useState<Set<number>>(
+    () => new Set()
+  );
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
@@ -109,12 +157,15 @@ export default function BannerSlider({ slides }: { slides: DealSlide[] }) {
   const scrollToSlide = useCallback((index: number, smooth = true) => {
     const track = trackRef.current;
     const slide = track?.children.item(index);
-    if (!slide) return;
+    if (!track || !slide) return;
 
-    slide.scrollIntoView({
+    const left =
+      track.scrollLeft +
+      slide.getBoundingClientRect().left -
+      track.getBoundingClientRect().left;
+    track.scrollTo({
+      left,
       behavior: smooth && !prefersReducedMotion ? "smooth" : "auto",
-      block: "nearest",
-      inline: "start",
     });
   }, [prefersReducedMotion]);
 
@@ -151,6 +202,7 @@ export default function BannerSlider({ slides }: { slides: DealSlide[] }) {
 
     track.scrollLeft = 0;
     setActiveSlide(0);
+    setFailedBackgrounds(new Set());
     const observer = new IntersectionObserver(
       (entries) => {
         const mostVisible = entries
@@ -200,13 +252,15 @@ export default function BannerSlider({ slides }: { slides: DealSlide[] }) {
   }
 
   const whatsappUrl = getWhatsAppUrl("Hi, I'd like wholesale prices");
+  const contentClassName =
+    "relative z-10 mx-auto flex h-full w-full min-w-0 max-w-4xl items-center justify-center gap-5 px-4 sm:px-8 md:px-12";
 
   return (
     <section
       role="region"
       aria-roledescription="carousel"
       aria-label="Offers and deals"
-      className="relative"
+      className="relative isolate w-full max-w-full min-w-0 overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onFocusCapture={() => setIsFocused(true)}
@@ -224,116 +278,109 @@ export default function BannerSlider({ slides }: { slides: DealSlide[] }) {
     >
       <div
         ref={trackRef}
-        className="flex h-32 snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:h-40"
+        className="flex h-36 w-full max-w-full min-w-0 snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:h-44"
       >
         {carouselSlides.map((slide, index) => {
           const slideLabel = `${index + 1} of ${carouselSlides.length}`;
-          const background =
-            index % 2 === 0
+          const isFestival = slide.type === "festival";
+          const isDark = index % 2 === 0;
+          const baseColor = isFestival
+            ? "bg-accent text-on-accent"
+            : isDark
               ? "bg-brand-dark text-white"
               : "bg-brand text-on-brand";
-          const commonClassName =
-            "flex h-32 w-full shrink-0 snap-start items-center justify-center px-4 md:h-40 md:px-12";
+          const opaqueTintClassName = isFestival
+            ? "bg-accent"
+            : isDark
+              ? "bg-brand-dark"
+              : "bg-brand";
+          const tintClassName = isFestival
+            ? "bg-accent"
+            : isDark
+              ? "bg-brand-dark/75"
+              : "bg-brand/90";
+          const imageUrl =
+            slide.type !== "festival" && !failedBackgrounds.has(index)
+              ? getImageUrl(slide.bg ? [slide.bg.url] : [])
+              : undefined;
+          const handleBackgroundError = () => {
+            setFailedBackgrounds((previous) => {
+              const next = new Set(previous);
+              next.add(index);
+              return next;
+            });
+          };
 
+          let content: ReactNode;
           if (slide.type === "festival") {
-            return (
-              <div
-                key="festival"
-                role="group"
-                aria-roledescription="slide"
-                aria-label={slideLabel}
-                data-slide-index={index}
-                className={`${commonClassName} bg-accent text-on-accent`}
-              >
-                <p className="max-w-4xl text-center text-base font-semibold sm:text-lg md:text-xl">
-                  {slide.greeting}
-                </p>
-              </div>
+            content = (
+              <p className="max-w-full text-center text-base font-semibold [text-shadow:0_1px_3px_rgba(0,0,0,0.45)] sm:text-lg md:text-xl">
+                {slide.greeting}
+              </p>
             );
-          }
-
-          if (slide.type === "hero") {
-            const href = getProductHref(slide.product.id);
-            return (
-              <div
-                key={`hero-${slide.product.id}`}
-                role="group"
-                aria-roledescription="slide"
-                aria-label={slideLabel}
-                data-slide-index={index}
-                className={`${commonClassName} ${background}`}
+          } else if (slide.type === "hero") {
+            content = (
+              <Link
+                href={getProductHref(slide.product.id)}
+                prefetch={false}
+                onClick={() => trackEvent("banner-click")}
+                aria-label={`View deal: ${slide.product.name}`}
+                className="flex h-full w-full min-w-0 items-center gap-3 sm:gap-5"
               >
-                <Link
-                  href={href}
-                  prefetch={false}
-                  onClick={() => trackEvent("banner-click")}
-                  aria-label={`View deal: ${slide.product.name}`}
-                  className="flex h-full w-full max-w-5xl items-center gap-3 sm:gap-5"
-                >
-                  <ProductThumbnail
-                    images={slide.product.images}
-                    name={slide.product.name}
-                    eager={index === 0}
-                    className="h-24 w-24 md:h-32 md:w-32"
-                  />
-                  <span className="flex min-w-0 flex-1 items-center gap-3 sm:gap-5">
-                    <span className="min-w-0 flex-1">
-                      <span className="inline-flex rounded-full bg-accent px-2.5 py-1 text-sm font-extrabold text-on-accent sm:text-base">
-                        {slide.pct}% OFF
+                <ProductThumbnail
+                  images={slide.product.images}
+                  eager={index === 0}
+                  className="h-24 w-24 md:h-32 md:w-32"
+                />
+                <span className="flex min-w-0 flex-1 items-center gap-3 sm:gap-5">
+                  <span className="min-w-0 flex-1">
+                    <span className="inline-flex rounded-full bg-accent px-2.5 py-1 text-sm font-extrabold text-on-accent sm:text-base">
+                      {slide.pct}% OFF
+                    </span>
+                    <span className="mt-1 block line-clamp-2 text-sm font-semibold leading-tight [text-shadow:0_1px_3px_rgba(0,0,0,0.45)] sm:text-base md:text-lg">
+                      {slide.product.name}
+                    </span>
+                    <span className="mt-1 flex flex-wrap items-baseline gap-x-2">
+                      <span className="text-lg font-bold sm:text-xl">
+                        {formatPrice(slide.product.retail_price)}
                       </span>
-                      <span className="mt-1 block line-clamp-2 text-sm font-semibold leading-tight sm:text-base md:text-lg">
-                        {slide.product.name}
-                      </span>
-                      <span className="mt-1 flex flex-wrap items-baseline gap-x-2">
-                        <span className="text-lg font-bold sm:text-xl">
-                          {formatPrice(slide.product.retail_price)}
-                        </span>
-                        <span className="text-xs opacity-80 line-through sm:text-sm">
-                          {formatPrice(slide.product.mrp)}
-                        </span>
+                      <span className="text-xs opacity-80 line-through sm:text-sm">
+                        {formatPrice(slide.product.mrp)}
                       </span>
                     </span>
-                    <span className="shrink-0 rounded-full bg-white/15 px-2 py-1 text-xs font-semibold sm:px-4 sm:py-2 sm:text-sm">
-                      View deal
-                    </span>
                   </span>
-                </Link>
-              </div>
+                  <span className="shrink-0 rounded-full bg-white/15 px-2 py-1 text-xs font-semibold sm:px-4 sm:py-2 sm:text-sm">
+                    View deal
+                  </span>
+                </span>
+              </Link>
             );
-          }
-
-          if (slide.type === "collage") {
-            return (
-              <div
-                key="collage"
-                role="group"
-                aria-roledescription="slide"
-                aria-label={slideLabel}
-                data-slide-index={index}
-                className={`${commonClassName} ${background}`}
+          } else if (slide.type === "collage") {
+            content = (
+              <Link
+                href="/"
+                prefetch={false}
+                onClick={() => trackEvent("banner-click")}
+                className="flex h-full w-full min-w-0 flex-col items-center justify-center gap-2"
+                aria-label={`Shop today's top deals, up to ${slide.topPct}% off`}
               >
-                <Link
-                  href="/"
-                  prefetch={false}
-                  onClick={() => trackEvent("banner-click")}
-                  className="flex h-full w-full max-w-5xl flex-col items-center justify-center gap-2"
-                  aria-label={`Shop today's top deals, up to ${slide.topPct}% off`}
-                >
-                  <span className="text-center text-base font-bold sm:text-lg md:text-xl">
-                    Top deals today: up to {slide.topPct}% off
-                  </span>
-                  <span className="flex items-center justify-center gap-3">
-                    {slide.products.map(({ product, pct }, productIndex) => (
+                <span className="max-w-full text-center text-base font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.45)] sm:text-lg md:text-xl">
+                  Top deals today: up to {slide.topPct}% off
+                </span>
+                <span className="flex max-w-full items-center justify-center gap-2 sm:gap-3">
+                  {slide.products.map(({ product, pct }) => {
+                    const thumbnailUrl = getImageUrl(product.images);
+                    return (
                       <span
                         key={product.id}
-                        className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-white p-1 sm:h-14 sm:w-14"
+                        className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white p-1 ring-2 ring-white/80 shadow-lg md:h-[104px] md:w-[104px]"
                       >
-                        {getImageUrl(product.images) && (
+                        {thumbnailUrl && (
                           <img
-                            src={getImageUrl(product.images)}
+                            src={thumbnailUrl}
                             alt=""
-                            width={56}
-                            height={56}
+                            width={104}
+                            height={104}
                             loading={index === 0 ? "eager" : "lazy"}
                             decoding="async"
                             className="h-full w-full object-contain"
@@ -342,101 +389,66 @@ export default function BannerSlider({ slides }: { slides: DealSlide[] }) {
                         <span className="absolute -right-1 -top-1 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-on-accent">
                           {pct}%
                         </span>
-                        {productIndex === 0 && (
-                          <span className="sr-only">{product.name}</span>
-                        )}
                       </span>
-                    ))}
-                  </span>
-                </Link>
-              </div>
-            );
-          }
-
-          if (slide.type === "category") {
-            return (
-              <div
-                key={`category-${slide.category}`}
-                role="group"
-                aria-roledescription="slide"
-                aria-label={slideLabel}
-                data-slide-index={index}
-                className={`${commonClassName} ${background}`}
-              >
-                <Link
-                  href={`/?category=${encodeURIComponent(slide.category)}`}
-                  prefetch={false}
-                  onClick={() => {
-                    trackEvent("banner-click");
-                    window.dispatchEvent(
-                      new CustomEvent("catalog-banner-category", {
-                        detail: slide.category,
-                      })
                     );
-                  }}
-                  className="flex flex-col items-center gap-3 text-center"
-                >
-                  <span className="text-lg font-bold sm:text-xl md:text-2xl">
-                    Up to {slide.topPct}% off on {slide.category}
-                  </span>
-                  <span className="rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold">
-                    Shop {slide.category}
-                  </span>
-                </Link>
-              </div>
+                  })}
+                </span>
+              </Link>
             );
-          }
-
-          if (slide.type === "savings") {
-            return (
-              <div
-                key={`savings-${slide.product.id}`}
-                role="group"
-                aria-roledescription="slide"
-                aria-label={slideLabel}
-                data-slide-index={index}
-                className={`${commonClassName} ${background}`}
+          } else if (slide.type === "category") {
+            content = (
+              <Link
+                href={`/?category=${encodeURIComponent(slide.category)}`}
+                prefetch={false}
+                onClick={() => {
+                  trackEvent("banner-click");
+                  window.dispatchEvent(
+                    new CustomEvent("catalog-banner-category", {
+                      detail: slide.category,
+                    })
+                  );
+                }}
+                className="flex max-w-full flex-col items-center gap-3 text-center"
               >
-                <Link
-                  href={getProductHref(slide.product.id)}
-                  prefetch={false}
-                  onClick={() => trackEvent("banner-click")}
-                  aria-label={`View deal: ${slide.product.name}`}
-                  className="flex h-full w-full max-w-5xl items-center gap-3 sm:gap-5"
-                >
-                  <ProductThumbnail
-                    images={slide.product.images}
-                    name={slide.product.name}
-                    eager={index === 0}
-                    className="h-24 w-24 md:h-32 md:w-32"
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-lg font-bold sm:text-xl md:text-2xl">
-                      Save Rs {slide.saveRs.toLocaleString("en-IN")} on
-                    </span>
-                    <span className="mt-1 line-clamp-2 block text-sm font-semibold sm:text-base">
-                      {slide.product.name}
-                    </span>
-                  </span>
-                  <span className="shrink-0 rounded-full bg-white/15 px-2 py-1 text-xs font-semibold sm:px-4 sm:py-2 sm:text-sm">
-                    View deal
-                  </span>
-                </Link>
-              </div>
+                <span className="max-w-full text-lg font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.45)] sm:text-xl md:text-2xl">
+                  Up to {slide.topPct}% off on {slide.category}
+                </span>
+                <span className="rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold">
+                  Shop {slide.category}
+                </span>
+              </Link>
             );
-          }
-
-          return (
-            <div
-              key="wholesale"
-              role="group"
-              aria-roledescription="slide"
-              aria-label={slideLabel}
-              data-slide-index={index}
-              className={`${commonClassName} ${background}`}
-            >
-              <span className="flex flex-col items-center justify-center gap-3 text-center sm:flex-row sm:gap-5">
-                <span className="text-base font-bold sm:text-lg md:text-xl">
+          } else if (slide.type === "savings") {
+            content = (
+              <Link
+                href={getProductHref(slide.product.id)}
+                prefetch={false}
+                onClick={() => trackEvent("banner-click")}
+                aria-label={`View deal: ${slide.product.name}`}
+                className="flex h-full w-full min-w-0 items-center gap-3 sm:gap-5"
+              >
+                <ProductThumbnail
+                  images={slide.product.images}
+                  eager={index === 0}
+                  className="h-24 w-24 md:h-32 md:w-32"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-lg font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.45)] sm:text-xl md:text-2xl">
+                    Save ₹{slide.saveRs.toLocaleString("en-IN")} on
+                  </span>
+                  <span className="mt-1 line-clamp-2 block text-sm font-semibold [text-shadow:0_1px_3px_rgba(0,0,0,0.45)] sm:text-base">
+                    {slide.product.name}
+                  </span>
+                </span>
+                <span className="shrink-0 rounded-full bg-white/15 px-2 py-1 text-xs font-semibold sm:px-4 sm:py-2 sm:text-sm">
+                  View deal
+                </span>
+              </Link>
+            );
+          } else {
+            content = (
+              <span className="flex max-w-full flex-col items-center justify-center gap-3 text-center sm:flex-row sm:gap-5">
+                <span className="text-base font-bold [text-shadow:0_1px_3px_rgba(0,0,0,0.45)] sm:text-lg md:text-xl">
                   Buying in bulk? Wholesale prices available
                 </span>
                 <a
@@ -444,15 +456,46 @@ export default function BannerSlider({ slides }: { slides: DealSlide[] }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackEvent("banner-click")}
-                  className="rounded-full bg-white/15 px-4 py-2 text-sm font-semibold"
+                  className="shrink-0 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold"
                 >
                   Chat on WhatsApp
                 </a>
               </span>
+            );
+          }
+
+          return (
+            <div
+              key={getSlideKey(slide)}
+              role="group"
+              aria-roledescription="slide"
+              aria-label={slideLabel}
+              data-slide-index={index}
+              className={`relative isolate flex h-36 w-full min-w-0 max-w-full shrink-0 snap-start overflow-hidden md:h-44 ${baseColor}`}
+            >
+              <SlideBackdrop
+                imageUrl={imageUrl}
+                tintClassName={tintClassName}
+                opaqueTintClassName={opaqueTintClassName}
+                eager={index === 0}
+                onImageError={handleBackgroundError}
+              />
+              <div
+                className={`${contentClassName} ${
+                  slide.type === "collage" ? "flex-col gap-2" : ""
+                }`}
+              >
+                {content}
+              </div>
             </div>
           );
         })}
       </div>
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-1 bg-accent"
+      />
 
       {carouselSlides.length > 1 && (
         <>
@@ -464,7 +507,7 @@ export default function BannerSlider({ slides }: { slides: DealSlide[] }) {
                 (activeSlide - 1 + carouselSlides.length) % carouselSlides.length
               )
             }
-            className="absolute left-3 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/25 text-white hover:bg-black/40 md:flex"
+            className="absolute left-3 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/25 text-white hover:bg-black/40 md:flex"
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
               <path
@@ -481,7 +524,7 @@ export default function BannerSlider({ slides }: { slides: DealSlide[] }) {
             type="button"
             aria-label="Next slide"
             onClick={() => scrollToSlide((activeSlide + 1) % carouselSlides.length)}
-            className="absolute right-3 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/25 text-white hover:bg-black/40 md:flex"
+            className="absolute right-3 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/25 text-white hover:bg-black/40 md:flex"
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
               <path
@@ -494,7 +537,7 @@ export default function BannerSlider({ slides }: { slides: DealSlide[] }) {
               />
             </svg>
           </button>
-          <div className="absolute bottom-1 left-1/2 flex -translate-x-1/2 items-center">
+          <div className="absolute bottom-2 left-1/2 z-30 flex -translate-x-1/2 items-center">
             {carouselSlides.map((_, index) => (
               <button
                 key={index}

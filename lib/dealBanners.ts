@@ -17,30 +17,40 @@ type DiscountedProduct = {
   saveRs: number;
 };
 
+type BackgroundImage = {
+  url: string;
+  productId: string;
+};
+
 export type DealSlide =
   | {
       type: "hero";
       product: Product;
       pct: number;
       saveRs: number;
+      bg?: BackgroundImage;
     }
   | {
       type: "collage";
       products: DiscountedProduct[];
       topPct: number;
+      bg?: BackgroundImage;
     }
   | {
       type: "category";
       category: string;
       topPct: number;
+      bg?: BackgroundImage;
     }
   | {
       type: "savings";
       product: Product;
       saveRs: number;
+      bg?: BackgroundImage;
     }
   | {
       type: "wholesale";
+      bg?: BackgroundImage;
     };
 
 function isAllowedImageUrl(value: string): boolean {
@@ -106,6 +116,87 @@ function shuffle<T>(values: T[], random: () => number): T[] {
     ];
   }
   return shuffled;
+}
+
+function getFirstImage(product: Product): string | undefined {
+  const firstNonEmpty = product.images.find((image) => image.trim());
+  if (!firstNonEmpty || !isAllowedImageUrl(firstNonEmpty)) {
+    return undefined;
+  }
+  return firstNonEmpty.trim();
+}
+
+function getSlideCategory(slide: DealSlide): string | undefined {
+  if (slide.type === "hero" || slide.type === "savings") {
+    return slide.product.category;
+  }
+  if (slide.type === "collage") {
+    return slide.products[0]?.product.category;
+  }
+  if (slide.type === "category") {
+    return slide.category;
+  }
+  return undefined;
+}
+
+function getSlideTileIds(slide: DealSlide): Set<string> {
+  if (slide.type === "hero" || slide.type === "savings") {
+    return new Set([slide.product.id]);
+  }
+  if (slide.type === "collage") {
+    return new Set(slide.products.map(({ product }) => product.id));
+  }
+  return new Set();
+}
+
+function addBackgrounds(
+  slides: DealSlide[],
+  products: Product[],
+  today: string
+): DealSlide[] {
+  const usedBackgroundIds = new Set<string>();
+
+  return slides.map((slide, slideIndex) => {
+    const category = getSlideCategory(slide)?.trim().toLowerCase();
+    const tileIds = getSlideTileIds(slide);
+    const candidates = products.flatMap((product) => {
+      if (
+        typeof product.stock !== "number" ||
+        !Number.isFinite(product.stock) ||
+        product.stock <= 0 ||
+        (category &&
+          product.category.trim().toLowerCase() !== category)
+      ) {
+        return [];
+      }
+
+      const url = getFirstImage(product);
+      return url ? [{ productId: product.id, url }] : [];
+    });
+
+    if (candidates.length === 0) {
+      return slide;
+    }
+
+    const score = (candidate: BackgroundImage) =>
+      Number(tileIds.has(candidate.productId)) +
+      Number(usedBackgroundIds.has(candidate.productId));
+    const bestScore = Math.min(...candidates.map(score));
+    const preferredCandidates = candidates.filter(
+      (candidate) => score(candidate) === bestScore
+    );
+    const selected = shuffle(
+      preferredCandidates,
+      mulberry32(hashSeed(`${today}:bg:${slideIndex}`))
+    )[0];
+
+    if (!selected) {
+      return slide;
+    }
+
+    usedBackgroundIds.add(selected.productId);
+    return { ...slide, bg: selected };
+  });
 }
 
 function getDiscountedProducts(products: Product[]): DiscountedProduct[] {
@@ -175,6 +266,7 @@ function getTopCategory(products: DiscountedProduct[]) {
 
 export async function getDealSlides(): Promise<DealSlide[]> {
   const products = await getProducts();
+  const today = getToday();
   const qualifyingProducts = getDiscountedProducts(products);
   const hasWholesaleProduct = products.some(
     (product) =>
@@ -184,7 +276,11 @@ export async function getDealSlides(): Promise<DealSlide[]> {
   );
 
   if (qualifyingProducts.length === 0) {
-    return hasWholesaleProduct ? [{ type: "wholesale" }] : [];
+    return addBackgrounds(
+      hasWholesaleProduct ? [{ type: "wholesale" }] : [],
+      products,
+      today
+    );
   }
 
   const topDiscounts = qualifyingProducts
@@ -196,7 +292,7 @@ export async function getDealSlides(): Promise<DealSlide[]> {
         })
     )
     .slice(0, 12);
-  const shuffled = shuffle(topDiscounts, mulberry32(hashSeed(getToday())));
+  const shuffled = shuffle(topDiscounts, mulberry32(hashSeed(today)));
   const firstHero = shuffled[0];
   const secondHero = shuffled[1];
   const collageProducts = shuffled.slice(2, 5);
@@ -256,5 +352,9 @@ export async function getDealSlides(): Promise<DealSlide[]> {
     slides.push({ type: "wholesale" });
   }
 
-  return slides.slice(0, CONFIG.maxSlides);
+  return addBackgrounds(
+    slides.slice(0, CONFIG.maxSlides),
+    products,
+    today
+  );
 }
