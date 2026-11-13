@@ -1,24 +1,17 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { BUSINESS_PROFILE } from "@/lib/businessProfile";
 import {
+  buildTrackingSupportMessage,
+  formatTrackingOrderDate,
+  formatTrackingPrice,
   ORDER_TRACKING_STEPS,
   type TrackingOrderSummary,
 } from "@/lib/order-tracking";
 
 const GENERIC_LOOKUP_ERROR =
   "We could not find an order matching these details. Please verify your order number and mobile number.";
-
-function formatOrderDate(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? "Date unavailable"
-    : date.toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-}
 
 export default function TrackOrderForm() {
   const [orderNumber, setOrderNumber] = useState("");
@@ -162,13 +155,64 @@ export default function TrackOrderForm() {
               <div>
                 <dt className="text-sm text-gray-500">Order Date</dt>
                 <dd className="mt-1 font-medium text-gray-900">
-                  {formatOrderDate(order.orderDate)}
+                  {formatTrackingOrderDate(order.orderDate)}
                 </dd>
               </div>
               <div>
                 <dt className="text-sm text-gray-500">Current Order Status</dt>
                 <dd className="mt-1 font-semibold text-brand-dark">
                   {order.status}
+                </dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="border-t border-gray-200 pt-5">
+            <h3 className="font-semibold text-gray-900">Product Details</h3>
+            {order.items.length > 0 ? (
+              <ul className="mt-3 divide-y divide-gray-100">
+                {order.items.map((item, index) => (
+                  <li
+                    key={`${item.productName}-${index}`}
+                    className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {item.productName}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Qty: {item.quantity} × {formatTrackingPrice(item.unitPrice)}
+                      </p>
+                    </div>
+                    <p className="font-semibold text-gray-900">
+                      {formatTrackingPrice(item.amount)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-gray-600">
+                Product details are not available for this order.
+              </p>
+            )}
+
+            <dl className="mt-3 space-y-2 border-t border-gray-200 pt-4 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-gray-600">Subtotal</dt>
+                <dd className="font-medium text-gray-900">
+                  {formatTrackingPrice(order.subtotal)}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-gray-600">Shipping</dt>
+                <dd className="font-medium text-gray-900">
+                  {formatTrackingPrice(order.shipping)}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 border-t border-gray-200 pt-3 text-base">
+                <dt className="font-semibold text-gray-900">Grand Total</dt>
+                <dd className="font-bold text-brand-dark">
+                  {formatTrackingPrice(order.grandTotal)}
                 </dd>
               </div>
             </dl>
@@ -225,7 +269,9 @@ export default function TrackOrderForm() {
               Need help with your order?
             </p>
             <a
-              href="https://wa.me/917810093955"
+              href={`${BUSINESS_PROFILE.whatsappUrl}?text=${encodeURIComponent(
+                buildTrackingSupportMessage(order)
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition hover:bg-brand-dark hover:text-brand-soft"

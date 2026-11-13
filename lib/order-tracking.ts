@@ -15,21 +15,136 @@ export interface TrackingOrderRecord {
   phone: string | null;
   status: string | null;
   created_at: string;
+  subtotal: number | string | null;
+  shipping: number | string | null;
+  grand_total: number | string | null;
 }
 
-export interface TrackingOrderSummary {
+export interface TrackingOrderItem {
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  amount: number;
+}
+
+export interface VerifiedTrackingOrder {
   orderNumber: string;
   orderDate: string;
   status: string;
   progressIndex: number;
+  subtotal: number;
+  shipping: number;
+  grandTotal: number;
   statusNote?: string;
+}
+
+export interface TrackingOrderSummary extends VerifiedTrackingOrder {
+  items: TrackingOrderItem[];
+}
+
+function parseOrderAmount(value: unknown): number | null {
+  if (
+    typeof value !== "number" &&
+    (typeof value !== "string" || value.trim() === "")
+  ) {
+    return null;
+  }
+
+  const amount = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(amount) && amount >= 0 ? amount : null;
+}
+
+export function normalizeTrackingOrderItems(
+  records: readonly unknown[]
+): TrackingOrderItem[] | null {
+  const items: TrackingOrderItem[] = [];
+
+  for (const record of records) {
+    if (typeof record !== "object" || record === null || Array.isArray(record)) {
+      return null;
+    }
+
+    const itemRecord = record as Record<string, unknown>;
+    const productName =
+      typeof itemRecord.product_name === "string"
+        ? itemRecord.product_name.trim()
+        : "";
+    const quantity =
+      typeof itemRecord.quantity === "number" ||
+      typeof itemRecord.quantity === "string"
+        ? Number(itemRecord.quantity)
+        : NaN;
+    const unitPrice = parseOrderAmount(itemRecord.price);
+    const amount = parseOrderAmount(itemRecord.amount);
+
+    if (
+      !productName ||
+      !Number.isSafeInteger(quantity) ||
+      quantity < 1 ||
+      unitPrice === null ||
+      amount === null
+    ) {
+      return null;
+    }
+
+    items.push({ productName, quantity, unitPrice, amount });
+  }
+
+  return items;
+}
+
+export function formatTrackingPrice(value: number): string {
+  return `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+}
+
+export function formatTrackingOrderDate(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "Date unavailable"
+    : date.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+}
+
+export function buildTrackingSupportMessage(
+  order: Pick<
+    TrackingOrderSummary,
+    | "orderNumber"
+    | "orderDate"
+    | "status"
+    | "items"
+    | "subtotal"
+    | "shipping"
+    | "grandTotal"
+  >
+): string {
+  const itemLines = order.items.length
+    ? order.items.map(
+        (item) =>
+          `- ${item.productName} | Qty: ${item.quantity} | Unit: ${formatTrackingPrice(item.unitPrice)} | Amount: ${formatTrackingPrice(item.amount)}`
+      )
+    : ["- Product details are not available for this order."];
+
+  return [
+    "Hi NH Enterprises, I need help with my order.",
+    `Order Number: ${order.orderNumber}`,
+    `Order Date: ${formatTrackingOrderDate(order.orderDate)}`,
+    `Current Status: ${order.status}`,
+    "Products:",
+    ...itemLines,
+    `Subtotal: ${formatTrackingPrice(order.subtotal)}`,
+    `Shipping: ${formatTrackingPrice(order.shipping)}`,
+    `Grand Total: ${formatTrackingPrice(order.grandTotal)}`,
+  ].join("\n");
 }
 
 export type TrackingVerification =
   | { kind: "invalid"; field: "orderNumber" | "mobileNumber" }
   | { kind: "not-found" }
   | { kind: "database-error" }
-  | { kind: "found"; order: TrackingOrderSummary };
+  | { kind: "found"; order: VerifiedTrackingOrder };
 
 export type FindTrackingOrder = (
   orderNumber: string
@@ -127,6 +242,13 @@ export async function verifyTrackingRequest(
     return { kind: "not-found" };
   }
 
+  const subtotal = parseOrderAmount(lookup.order.subtotal);
+  const shipping = parseOrderAmount(lookup.order.shipping);
+  const grandTotal = parseOrderAmount(lookup.order.grand_total);
+  if (subtotal === null || shipping === null || grandTotal === null) {
+    return { kind: "database-error" };
+  }
+
   const trackingStatus = getTrackingStatus(lookup.order.status);
   return {
     kind: "found",
@@ -135,6 +257,9 @@ export async function verifyTrackingRequest(
       orderDate: lookup.order.created_at,
       status: trackingStatus.label,
       progressIndex: trackingStatus.progressIndex,
+      subtotal,
+      shipping,
+      grandTotal,
       ...(trackingStatus.statusNote
         ? { statusNote: trackingStatus.statusNote }
         : {}),

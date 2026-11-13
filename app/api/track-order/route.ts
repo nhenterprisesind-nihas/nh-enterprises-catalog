@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import {
+  normalizeTrackingOrderItems,
   verifyTrackingRequest,
   type TrackingOrderRecord,
 } from "@/lib/order-tracking";
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
       async (orderNumber) => {
         const { data, error } = await supabaseAdmin
           .from("orders")
-          .select("order_no, phone, status, created_at")
+          .select("order_no, phone, status, created_at, subtotal, shipping, grand_total")
           .eq("order_no", orderNumber)
           .maybeSingle();
 
@@ -95,6 +96,9 @@ export async function POST(request: NextRequest) {
                 phone: data.phone,
                 status: data.status,
                 created_at: data.created_at,
+                subtotal: data.subtotal,
+                shipping: data.shipping,
+                grand_total: data.grand_total,
               } satisfies TrackingOrderRecord)
             : null,
           error,
@@ -126,7 +130,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return jsonResponse({ order: result.order });
+    const { data: itemRecords, error: itemError } = await supabaseAdmin
+      .from("order_items")
+      .select("product_name, quantity, price, amount")
+      .eq("order_no", result.order.orderNumber)
+      .order("id", { ascending: true });
+
+    if (itemError) {
+      console.error("Order tracking item lookup failed.");
+      return jsonResponse(
+        { error: "Order tracking is temporarily unavailable. Please try again later." },
+        503
+      );
+    }
+
+    const items = normalizeTrackingOrderItems(itemRecords ?? []);
+    if (!items) {
+      console.error("Order tracking item data is invalid.");
+      return jsonResponse(
+        { error: "Order tracking is temporarily unavailable. Please try again later." },
+        503
+      );
+    }
+
+    return jsonResponse({ order: { ...result.order, items } });
   } catch (error) {
     console.error(
       "Order tracking request failed.",

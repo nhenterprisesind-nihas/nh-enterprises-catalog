@@ -2,10 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   areMobileNumbersEqual,
+  buildTrackingSupportMessage,
   getTrackingStatus,
   isOrderLookupRateLimited,
   normalizeIndianMobileNumber,
   normalizeOrderNumber,
+  normalizeTrackingOrderItems,
+  formatTrackingPrice,
   ORDER_LOOKUP_MAX_ATTEMPTS,
   ORDER_TRACKING_STEPS,
   verifyTrackingRequest,
@@ -17,6 +20,9 @@ const ORDER_ONE: TrackingOrderRecord = {
   phone: "+91 98765 43210",
   status: "Dispatched",
   created_at: "2026-11-13T10:00:00.000Z",
+  subtotal: 1200,
+  shipping: 50,
+  grand_total: 1250,
 };
 
 const ORDER_TWO: TrackingOrderRecord = {
@@ -24,6 +30,9 @@ const ORDER_TWO: TrackingOrderRecord = {
   phone: "9876543210",
   status: "Complete",
   created_at: "2026-11-13T11:00:00.000Z",
+  subtotal: "800",
+  shipping: "40",
+  grand_total: "840",
 };
 
 test("accepts the shown and stored order-number formats", () => {
@@ -117,6 +126,64 @@ test("maps the four progress values and leaves unexpected statuses pending", () 
   const unexpected = getTrackingStatus("Review Needed");
   assert.equal(unexpected.progressIndex, -1);
   assert.notEqual(unexpected.label, "Completed");
+});
+
+test("builds a WhatsApp support message with the displayed order snapshot", () => {
+  const message = buildTrackingSupportMessage({
+    orderNumber: ORDER_ONE.order_no,
+    orderDate: ORDER_ONE.created_at,
+    status: "Order Shipped",
+    items: [
+      {
+        productName: "Temple Necklace",
+        quantity: 2,
+        unitPrice: 600,
+        amount: 1200,
+      },
+    ],
+    subtotal: 1200,
+    shipping: 50,
+    grandTotal: 1250,
+  });
+
+  assert.match(message, /Order Number: NH202611131234560001/);
+  assert.match(message, /Order Date: 13 November 2026/);
+  assert.match(message, /Current Status: Order Shipped/);
+  assert.match(message, /Temple Necklace \| Qty: 2 \| Unit: ₹600 \| Amount: ₹1,200/);
+  assert.match(message, /Grand Total: ₹1,250/);
+});
+
+test("normalizes order items and formats invoice amounts", () => {
+  assert.deepEqual(
+    normalizeTrackingOrderItems([
+      {
+        product_name: "Temple Necklace",
+        quantity: "2",
+        price: "600",
+        amount: "1200",
+      },
+    ]),
+    [
+      {
+        productName: "Temple Necklace",
+        quantity: 2,
+        unitPrice: 600,
+        amount: 1200,
+      },
+    ]
+  );
+  assert.equal(formatTrackingPrice(1250), "₹1,250");
+  assert.equal(
+    normalizeTrackingOrderItems([
+      {
+        product_name: " ",
+        quantity: "2",
+        price: "600",
+        amount: "1200",
+      },
+    ]),
+    null
+  );
 });
 
 test("does not expose database error details", async () => {
