@@ -73,6 +73,7 @@ const quickLinks = [
   { label: "Shipping and Returns", href: "/shipping-returns" },
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms and Conditions", href: "/terms" },
+  { label: "Track Your Order", href: "/track-order" },
 ];
 
 export default function Footer() {
