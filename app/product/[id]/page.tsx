@@ -35,7 +35,7 @@ export async function generateMetadata({
   const { product } = await findProduct(id);
   if (!product) notFound();
 
-  const title = `${product.name} | NIKSHAS Online Shop`;
+  const title = `${product.name} | NH Enterprises`;
   const description = product.description?.trim()
     ? product.description.trim().slice(0, 150)
     : `₹${product.retail_price} · ${product.category}. Order on WhatsApp.`;

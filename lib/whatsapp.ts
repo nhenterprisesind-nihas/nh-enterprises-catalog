@@ -1,4 +1,5 @@
 import type { Product } from "@/context/CartContext";
+import { BUSINESS_PROFILE } from "@/lib/businessProfile";
 import { getProductUrl } from "@/lib/share";
 
 export function buildProductMessage(product: Product): string {
@@ -27,7 +28,7 @@ export function buildProductMessage(product: Product): string {
 
 export function getWhatsAppUrl(message: string): string {
   const number = (
-    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919999999999"
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || BUSINESS_PROFILE.whatsappNumber
   ).replace(/\D/g, "");
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }

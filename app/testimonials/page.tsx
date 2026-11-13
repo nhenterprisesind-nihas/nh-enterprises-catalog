@@ -5,8 +5,16 @@ import FestivalBanner from "@/components/FestivalBanner";
 import TestimonialsList from "@/components/TestimonialsList";
 
 export const metadata: Metadata = {
-  title: "Testimonials | Nikshas Collections",
-  description: "Customer feedback for products from Nikshas Collections.",
+  title: "Testimonials | NH Enterprises",
+  description: "Customer feedback for products from NH Enterprises.",
+  alternates: { canonical: "/testimonials" },
+  openGraph: {
+    type: "website",
+    siteName: "NH Enterprises",
+    title: "Testimonials | NH Enterprises",
+    description: "Customer feedback for products from NH Enterprises.",
+    url: "/testimonials",
+  },
 };
 
 function StarIcon() {
@@ -27,7 +35,7 @@ export default function TestimonialsPage() {
       <header className="border-b border-gray-200 bg-brand-dark shadow-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
           <Link href="/" className="text-lg font-bold tracking-tight text-brand-soft sm:text-xl">
-            Nikshas Collections
+            NH Enterprises
           </Link>
           <Link
             href="/"

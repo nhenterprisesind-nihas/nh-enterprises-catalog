@@ -11,6 +11,7 @@ import React, {
 import ProductCard from "@/components/ProductCard";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import Cart from "@/components/Cart";
+import SiteHeader from "@/components/SiteHeader";
 import { Product, useCart } from "@/context/CartContext";
 import Footer from "@/components/Footer";
 import FilterBar, {
@@ -319,31 +320,7 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <header className="sticky top-0 z-30 bg-brand-dark border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-brand flex flex-shrink-0 items-center justify-center">
-              {process.env.NEXT_PUBLIC_LOGO_URL ? (
-                <img
-                  src={process.env.NEXT_PUBLIC_LOGO_URL}
-                  alt="Brand Logo"
-                  className="h-10 w-10 rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-lg font-bold text-on-brand">N</span>
-              )}
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-brand-soft sm:text-2xl">
-                Nikshas Collections
-              </h1>
-              <p className="text-xs text-brand-soft">
-                Quality products at retail and wholesale pricing
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SiteHeader home />
       <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 md:flex-row md:items-start">
         {loading ? (
           <aside
