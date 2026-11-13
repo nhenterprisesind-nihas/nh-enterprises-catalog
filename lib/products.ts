@@ -1,5 +1,6 @@
 import Papa from "papaparse";
 import type { Product } from "@/context/CartContext";
+import { normalizeImageUrl } from "@/lib/images";
 
 type ProductRow = Record<string, string>;
 
@@ -40,13 +41,22 @@ export function parseProducts(csvText: string): Product[] {
     }
     usedIds.add(id);
 
-    const images: string[] = [];
-    for (let imageIndex = 1; imageIndex <= 5; imageIndex += 1) {
-      const url = row[`image_url_${imageIndex}`]?.trim();
-      if (url && !["NA", "N/A", "-"].includes(url.toUpperCase())) {
-        images.push(url);
+    const imageValues =
+      row.image_url_1 === undefined
+        ? [row.image_url]
+        : Array.from({ length: 5 }, (_, index) => row[`image_url_${index + 1}`]);
+    const images = imageValues.flatMap((imageValue) => {
+      const trimmedImageValue = imageValue?.trim();
+      if (
+        !trimmedImageValue ||
+        ["NA", "N/A", "-"].includes(trimmedImageValue.toUpperCase())
+      ) {
+        return [];
       }
-    }
+
+      const normalizedImageUrl = normalizeImageUrl(trimmedImageValue);
+      return normalizedImageUrl ? [normalizedImageUrl] : [];
+    });
 
     return {
       id,

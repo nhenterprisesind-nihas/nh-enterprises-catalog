@@ -6,6 +6,8 @@ import ProductDetailView from "@/components/ProductDetailView";
 import ReconcileCartProducts from "@/components/ReconcileCartProducts";
 import SetWhatsAppProduct from "@/components/SetWhatsAppProduct";
 import { getProducts } from "@/lib/products";
+import ProductImage from "@/components/ProductImage";
+import { optimizeImage } from "@/lib/images";
 
 export const revalidate = 300;
 
@@ -23,7 +25,7 @@ async function findProduct(id: string) {
 
 function getSocialImage(imageUrl: string | undefined): string {
   if (!imageUrl) return "/og-image.png";
-  return `https://wsrv.nl/?url=${encodeURIComponent(imageUrl)}&w=800&output=jpg&q=75`;
+  return optimizeImage(imageUrl, 800, "jpg", 75);
 }
 
 export async function generateMetadata({
@@ -117,14 +119,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 >
                   <div className="aspect-square bg-gray-100">
                     {recommendation.images[0] && (
-                      <img
+                      <ProductImage
+                        key={recommendation.images[0]}
                         src={recommendation.images[0]}
                         alt={recommendation.name}
                         width={320}
                         height={320}
                         loading="lazy"
-                        decoding="async"
                         className="h-full w-full object-cover"
+                        placeholderClassName="flex h-full w-full items-center justify-center bg-gray-100 px-2 text-center text-xs text-gray-500"
                       />
                     )}
                   </div>

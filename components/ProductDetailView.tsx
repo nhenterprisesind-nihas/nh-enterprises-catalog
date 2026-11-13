@@ -6,6 +6,7 @@ import { getAvailableStock, Product, useCart } from "@/context/CartContext";
 import { getWhatsAppShareUrl } from "@/lib/share";
 import { buildProductMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 import { trackEvent } from "@/lib/trackEvent";
+import ProductImage from "@/components/ProductImage";
 
 function formatPrice(price: number): string {
   return `₹${price.toLocaleString("en-IN")}`;
@@ -51,14 +52,15 @@ export default function ProductDetailView({
         <div className="relative aspect-square overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           {product.images.length > 0 ? (
             <>
-              <img
+              <ProductImage
+                key={`${product.images[selectedImage]}-${selectedImage}`}
                 src={product.images[selectedImage]}
                 alt={`${product.name} - Image ${selectedImage + 1}`}
                 width={800}
                 height={800}
                 loading={selectedImage === 0 ? "eager" : "lazy"}
-                decoding="async"
                 className="h-full w-full object-contain"
+                placeholderClassName="flex h-full w-full items-center justify-center bg-gray-100 text-sm text-gray-500"
               />
               {product.images.length > 1 && (
                 <>
@@ -120,14 +122,14 @@ export default function ProductDetailView({
                   selectedImage === index ? "border-brand-dark" : "border-gray-200"
                 }`}
               >
-                <img
+                <ProductImage
                   src={image}
                   alt=""
                   width={64}
                   height={64}
                   loading="lazy"
-                  decoding="async"
                   className="h-full w-full object-cover"
+                  placeholderClassName="flex h-full w-full items-center justify-center bg-gray-100 px-1 text-center text-[9px] leading-tight text-gray-500"
                 />
               </button>
             ))}
