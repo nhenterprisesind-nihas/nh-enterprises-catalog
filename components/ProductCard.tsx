@@ -253,7 +253,7 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
                 className="text-center p-2 rounded-md text-xs bg-gray-50 border border-gray-200 cursor-default"
               >
                 <div className="font-medium text-gray-400 line-through">MRP</div>
-                <div className="text-sm font-bold text-gray-400 line-through">₹{product.mrp}</div>
+                <div className="text-sm font-bold text-gray-400 line-through">₹{product.mrp.toLocaleString("en-IN")}</div>
               </div>
               <button
                 onClick={() => setSelectedPrice("retail")}
@@ -264,7 +264,7 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
                 }`}
               >
                 <div className="font-medium">Retail</div>
-                <div className="text-sm font-bold">₹{product.retail_price}</div>
+                <div className="text-sm font-bold">₹{product.retail_price.toLocaleString("en-IN")}</div>
               </button>
               <button
                 onClick={() => {
@@ -280,7 +280,7 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
                 }`}
               >
                 <div className="font-medium">Wholesale</div>
-                <div className="text-sm font-bold">₹{product.wholesale_price}</div>
+                <div className="text-sm font-bold">₹{product.wholesale_price.toLocaleString("en-IN")}</div>
               </button>
             </div>
             {selectedPrice === "wholesale" && (

@@ -19,6 +19,12 @@ import FilterBar, {
   type SortOption,
 } from "@/components/FilterBar";
 import { parseProducts } from "@/lib/products";
+import {
+  getPriceRangeForValue,
+  isPriceRangeId,
+  PRICE_RANGES,
+  type PriceRangeId,
+} from "@/lib/priceRanges";
 
 const PRODUCTS_PER_BATCH = 24;
 const EAGER_PRODUCT_IMAGE_COUNT = 6;
@@ -31,8 +37,11 @@ export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const hasReadInitialCategoryRef = useRef(false);
+  const hasReadInitialPriceRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedPriceRange, setSelectedPriceRange] =
+    useState<PriceRangeId | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>(DEFAULT_SORT);
   const [inStockOnly, setInStockOnly] = useState(false);
@@ -41,6 +50,7 @@ export default function CatalogPage() {
   const activeFetchRef = useRef<AbortController | null>(null);
 
   const deferredSelectedCategory = useDeferredValue(selectedCategory);
+  const deferredSelectedPriceRange = useDeferredValue(selectedPriceRange);
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const deferredSortOption = useDeferredValue(sortOption);
   const deferredInStockOnly = useDeferredValue(inStockOnly);
@@ -140,6 +150,18 @@ export default function CatalogPage() {
   }, [categories, loading]);
 
   useEffect(() => {
+    if (loading || hasReadInitialPriceRef.current) return;
+
+    hasReadInitialPriceRef.current = true;
+    const requestedPriceRange = new URLSearchParams(window.location.search).get(
+      "price"
+    );
+    if (isPriceRangeId(requestedPriceRange)) {
+      setSelectedPriceRange(requestedPriceRange);
+    }
+  }, [loading]);
+
+  useEffect(() => {
     const handleBannerCategory = (event: Event) => {
       if (!(event instanceof CustomEvent) || typeof event.detail !== "string") {
         return;
@@ -159,7 +181,7 @@ export default function CatalogPage() {
       window.removeEventListener("catalog-banner-category", handleBannerCategory);
   }, [categories]);
 
-  const filteredProducts = useMemo(() => {
+  const searchAndCategoryFilteredProducts = useMemo(() => {
     const normalizedSearch = deferredSearchQuery.trim().toLowerCase();
     const searchedProducts = products.filter(
       (product) =>
@@ -172,11 +194,44 @@ export default function CatalogPage() {
         deferredSelectedCategory === null ||
         product.category.trim().toLowerCase() === deferredSelectedCategory
     );
-    const stockFilteredProducts = deferredInStockOnly
-      ? categoryFilteredProducts.filter(
+
+    return categoryFilteredProducts;
+  }, [products, deferredSearchQuery, deferredSelectedCategory]);
+
+  const priceRangeCounts = useMemo(() => {
+    const productsToCount = deferredInStockOnly
+      ? searchAndCategoryFilteredProducts.filter(
           (product) => Number.isFinite(product.stock) && product.stock > 0
         )
-      : categoryFilteredProducts;
+      : searchAndCategoryFilteredProducts;
+    const counts = new Map<PriceRangeId, number>();
+    PRICE_RANGES.forEach((range) => counts.set(range.id, 0));
+
+    productsToCount.forEach((product) => {
+      const range = getPriceRangeForValue(product.retail_price);
+      if (range) {
+        counts.set(range.id, (counts.get(range.id) ?? 0) + 1);
+      }
+    });
+
+    return { allPrices: productsToCount.length, byRange: counts };
+  }, [searchAndCategoryFilteredProducts, deferredInStockOnly]);
+
+  const filteredProducts = useMemo(() => {
+    const selectedRange = PRICE_RANGES.find(
+      (range) => range.id === deferredSelectedPriceRange
+    );
+    const priceFilteredProducts = selectedRange
+      ? searchAndCategoryFilteredProducts.filter(
+          (product) =>
+            getPriceRangeForValue(product.retail_price)?.id === selectedRange.id
+        )
+      : searchAndCategoryFilteredProducts;
+    const stockFilteredProducts = deferredInStockOnly
+      ? priceFilteredProducts.filter(
+          (product) => Number.isFinite(product.stock) && product.stock > 0
+        )
+      : priceFilteredProducts;
 
     return [...stockFilteredProducts].sort((a, b) => {
       if (
@@ -206,9 +261,8 @@ export default function CatalogPage() {
       return b.originalRowIndex - a.originalRowIndex;
     });
   }, [
-    products,
-    deferredSearchQuery,
-    deferredSelectedCategory,
+    searchAndCategoryFilteredProducts,
+    deferredSelectedPriceRange,
     deferredInStockOnly,
     deferredSortOption,
   ]);
@@ -223,6 +277,22 @@ export default function CatalogPage() {
     setVisibleProductCount(PRODUCTS_PER_BATCH);
   }, []);
 
+  const handleSelectedPriceRangeChange = useCallback(
+    (value: PriceRangeId | null) => {
+      setSelectedPriceRange(value);
+      setVisibleProductCount(PRODUCTS_PER_BATCH);
+
+      const url = new URL(window.location.href);
+      if (value) {
+        url.searchParams.set("price", value);
+      } else {
+        url.searchParams.delete("price");
+      }
+      window.history.replaceState(window.history.state, "", url.toString());
+    },
+    []
+  );
+
   const handleSortOptionChange = useCallback((value: SortOption) => {
     setSortOption(value);
     setVisibleProductCount(PRODUCTS_PER_BATCH);
@@ -236,6 +306,10 @@ export default function CatalogPage() {
   const clearFilters = useCallback(() => {
     setSearchQuery("");
     setSelectedCategory(null);
+    setSelectedPriceRange(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("price");
+    window.history.replaceState(window.history.state, "", url.toString());
     setInStockOnly(false);
     setSortOption(DEFAULT_SORT);
     setVisibleProductCount(PRODUCTS_PER_BATCH);
@@ -289,6 +363,10 @@ export default function CatalogPage() {
             categories={categories}
             selectedCategory={selectedCategory}
             onSelectedCategoryChange={handleSelectedCategoryChange}
+            selectedPriceRange={selectedPriceRange}
+            priceRangeCounts={priceRangeCounts.byRange}
+            allPricesCount={priceRangeCounts.allPrices}
+            onSelectedPriceRangeChange={handleSelectedPriceRangeChange}
           />
         )}
         <section className="min-w-0 flex-1">
