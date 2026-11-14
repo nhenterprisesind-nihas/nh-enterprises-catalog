@@ -12,14 +12,25 @@ import { optimizeImage } from "@/lib/images";
 export const revalidate = 300;
 
 interface ProductPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string[] }>;
 }
 
-async function findProduct(id: string) {
+async function findProduct(id: string[]) {
+  const productId = id.join("/");
   const products = await getProducts();
+  const product =
+    products.find(
+      (candidate) => candidate.id.toLowerCase() === productId.toLowerCase()
+    ) ??
+    products.find(
+      (candidate) =>
+        candidate.id.toLowerCase() ===
+        productId.replace(/(\d+)\/(\d+)/g, "$1by$2").toLowerCase()
+    );
+
   return {
     products,
-    product: products.find((product) => product.id.toLowerCase() === id.toLowerCase()),
+    product,
   };
 }
 
