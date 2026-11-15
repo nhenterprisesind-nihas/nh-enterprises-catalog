@@ -8,6 +8,8 @@ import SetWhatsAppProduct from "@/components/SetWhatsAppProduct";
 import { getProducts } from "@/lib/products";
 import ProductImage from "@/components/ProductImage";
 import { optimizeImage } from "@/lib/images";
+import JsonLd from "@/components/JsonLd";
+import { SITE_URL } from "@/lib/businessProfile";
 
 export const revalidate = 300;
 
@@ -94,8 +96,72 @@ export default async function ProductPage({ params }: ProductPageProps) {
           )
           .slice(0, 4)
       : [];
+  const productUrl = new URL(
+    `/product/${encodeURIComponent(product.id)}`,
+    SITE_URL
+  ).toString();
+  const productImages = product.images
+    .slice(0, 5)
+    .map((image) => new URL(image, SITE_URL).toString());
+  const productStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    ...(product.description?.trim()
+      ? { description: product.description.trim() }
+      : {}),
+    sku: product.id,
+    ...(productImages.length > 0 ? { image: productImages } : {}),
+    offers: {
+      "@type": "Offer",
+      url: productUrl,
+      priceCurrency: "INR",
+      ...(Number.isFinite(product.retail_price) && product.retail_price > 0
+        ? { price: product.retail_price }
+        : {}),
+      availability:
+        product.stock > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+  };
+  const category = product.category.trim();
+  const breadcrumbStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: SITE_URL,
+      },
+      ...(category
+        ? [
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: category,
+              item: `${SITE_URL}/?category=${encodeURIComponent(
+                category.toLowerCase()
+              )}`,
+            },
+          ]
+        : []),
+      {
+        "@type": "ListItem",
+        position: category ? 3 : 2,
+        name: product.name,
+        item: productUrl,
+      },
+    ],
+  };
 
   return (
+    <>
+      <JsonLd data={productStructuredData} />
+      <JsonLd data={breadcrumbStructuredData} />
     <main className="min-h-screen bg-surface px-4 py-8">
       <div className="mx-auto max-w-5xl">
         <nav aria-label="Breadcrumb" className="mb-6 text-sm text-gray-500">
@@ -162,5 +228,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <ReconcileCartProducts products={products} />
       <Cart />
     </main>
+    </>
   );
 }

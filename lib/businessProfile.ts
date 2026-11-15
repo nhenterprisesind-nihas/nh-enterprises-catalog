@@ -12,6 +12,14 @@ export const BUSINESS_PROFILE = {
   gstin: "33BETPD3982A1ZM",
 } as const;
 
+export const BUSINESS_SOCIAL_LINKS = [
+  "https://instagram.com/nhentrprises",
+  "https://chat.whatsapp.com/JfALSlcxJJlExgWDY8hmtX",
+  "https://www.facebook.com/profile.php?id=61568503961128",
+] as const;
+
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://nh-enterprises-catalog.vercel.app";
+  (
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://nh-enterprises-catalog.vercel.app"
+  ).replace(/\/+$/, "");

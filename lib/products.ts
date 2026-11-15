@@ -79,13 +79,15 @@ export function parseProducts(csvText: string): Product[] {
   return products;
 }
 
-export async function getProducts(): Promise<Product[]> {
+export async function getProducts(revalidateSeconds = 300): Promise<Product[]> {
   const sheetUrl = process.env.NEXT_PUBLIC_SHEET_URL;
   if (!sheetUrl) {
     throw new Error("NEXT_PUBLIC_SHEET_URL is not configured");
   }
 
-  const response = await fetch(sheetUrl, { next: { revalidate: 300 } });
+  const response = await fetch(sheetUrl, {
+    next: { revalidate: revalidateSeconds },
+  });
   if (!response.ok) {
     throw new Error(`Product fetch failed with status ${response.status}`);
   }

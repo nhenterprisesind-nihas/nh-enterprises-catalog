@@ -145,7 +145,7 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
                     {!imageError.has(idx) ? (
                       <img
                         src={url}
-                        alt={`${product.name} - Image ${idx + 1}`}
+                        alt={product.name}
                         className="w-full h-full object-cover cursor-pointer"
                         width={400}
                         height={192}
@@ -238,11 +238,11 @@ function ProductCard({ product, eagerImage }: ProductCardProps) {
         </div>
 
         <div className="p-4 flex flex-col flex-1">
-          <h3 className="text-gray-900 font-semibold text-base mb-1 line-clamp-2">
+          <h2 className="text-gray-900 font-semibold text-base mb-1 line-clamp-2">
             <Link href={`/product/${product.id}`} prefetch={false}>
               {product.name}
             </Link>
-          </h3>
+          </h2>
           <p className="text-gray-500 text-sm mb-3 line-clamp-2 flex-1">
             {product.description}
           </p>
@@ -404,7 +404,7 @@ function ImageGalleryModal({ images, initialIndex, productName, onClose }: Image
       <div className="flex-1 flex items-center justify-center w-full px-16 py-20">
         <img
           src={images[currentIndex]}
-          alt={`${productName} - Image ${currentIndex + 1}`}
+          alt={productName}
           className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
           width={800}
           height={600}
@@ -444,7 +444,7 @@ function ImageGalleryModal({ images, initialIndex, productName, onClose }: Image
             >
               <img
                 src={url}
-                alt={`Thumbnail ${idx + 1}`}
+                alt={productName}
                 className="w-full h-full object-cover"
                 width={56}
                 height={56}

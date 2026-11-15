@@ -1,0 +1,455 @@
+"use client";
+
+import React, {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import ProductCard from "@/components/ProductCard";
+import ProductCardSkeleton from "@/components/ProductCardSkeleton";
+import Cart from "@/components/Cart";
+import SiteHeader from "@/components/SiteHeader";
+import { Product, useCart } from "@/context/CartContext";
+import Footer from "@/components/Footer";
+import FilterBar, {
+  CategoryFilter,
+  type CategoryOption,
+  type SortOption,
+} from "@/components/FilterBar";
+import { parseProducts } from "@/lib/products";
+import {
+  getPriceRangeForValue,
+  isPriceRangeId,
+  PRICE_RANGES,
+  type PriceRangeId,
+} from "@/lib/priceRanges";
+
+const PRODUCTS_PER_BATCH = 24;
+const EAGER_PRODUCT_IMAGE_COUNT = 6;
+const DEFAULT_SORT: SortOption = "price-low-to-high";
+const PRODUCT_LOAD_ERROR =
+  "Couldn't load products. Please check your connection and try again.";
+
+export default function CatalogClient({
+  initialProducts,
+}: {
+  initialProducts: Product[];
+}) {
+  const { reconcileProducts } = useCart();
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [loading, setLoading] = useState(initialProducts.length === 0);
+  const hasReadInitialCategoryRef = useRef(false);
+  const hasReadInitialPriceRef = useRef(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedPriceRange, setSelectedPriceRange] =
+    useState<PriceRangeId | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOption, setSortOption] = useState<SortOption>(DEFAULT_SORT);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [visibleProductCount, setVisibleProductCount] = useState(PRODUCTS_PER_BATCH);
+  const isMountedRef = useRef(false);
+  const activeFetchRef = useRef<AbortController | null>(null);
+
+  const deferredSelectedCategory = useDeferredValue(selectedCategory);
+  const deferredSelectedPriceRange = useDeferredValue(selectedPriceRange);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const deferredSortOption = useDeferredValue(sortOption);
+  const deferredInStockOnly = useDeferredValue(inStockOnly);
+
+  const loadProducts = useCallback(async () => {
+    const sheetUrl = process.env.NEXT_PUBLIC_SHEET_URL;
+
+    if (!sheetUrl) {
+      const sampleProducts = getSampleProducts();
+      reconcileProducts(sampleProducts);
+      setProducts(sampleProducts);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    activeFetchRef.current?.abort();
+    const controller = new AbortController();
+    activeFetchRef.current = controller;
+    const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const cacheBuster = `${sheetUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
+      const response = await fetch(sheetUrl + cacheBuster, {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        throw new Error(`Product fetch failed with status ${response.status}`);
+      }
+
+      const csvText = await response.text();
+      const parsed = parseProducts(csvText);
+
+      if (isMountedRef.current && activeFetchRef.current === controller) {
+        reconcileProducts(parsed);
+        setProducts(parsed);
+        setLoading(false);
+      }
+    } catch {
+      if (isMountedRef.current && activeFetchRef.current === controller) {
+        setError(PRODUCT_LOAD_ERROR);
+        setLoading(false);
+      }
+    } finally {
+      window.clearTimeout(timeoutId);
+      if (activeFetchRef.current === controller) {
+        activeFetchRef.current = null;
+      }
+    }
+  }, [reconcileProducts]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    if (initialProducts.length > 0) {
+      reconcileProducts(initialProducts);
+    } else {
+      void loadProducts();
+    }
+
+    return () => {
+      isMountedRef.current = false;
+      activeFetchRef.current?.abort();
+      activeFetchRef.current = null;
+    };
+  }, [initialProducts, loadProducts, reconcileProducts]);
+
+  const categories = useMemo<CategoryOption[]>(() => {
+    const categoryLabels = new Map<string, string>();
+    products.forEach((product) => {
+      const label = product.category.trim();
+      const key = label.toLowerCase();
+      if (key && !categoryLabels.has(key)) {
+        categoryLabels.set(key, label);
+      }
+    });
+
+    return Array.from(categoryLabels, ([key, label]) => ({ key, label })).sort(
+      (a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+    );
+  }, [products]);
+
+  useEffect(() => {
+    if (loading || hasReadInitialCategoryRef.current) return;
+
+    hasReadInitialCategoryRef.current = true;
+    const requestedCategory = new URLSearchParams(window.location.search)
+      .get("category")
+      ?.trim()
+      .toLowerCase();
+    if (!requestedCategory) return;
+
+    const matchedCategory = categories.find(
+      (category) => category.key === requestedCategory
+    );
+    if (matchedCategory) {
+      setSelectedCategory(matchedCategory.key);
+    }
+  }, [categories, loading]);
+
+  useEffect(() => {
+    if (loading || hasReadInitialPriceRef.current) return;
+
+    hasReadInitialPriceRef.current = true;
+    const requestedPriceRange = new URLSearchParams(window.location.search).get(
+      "price"
+    );
+    if (isPriceRangeId(requestedPriceRange)) {
+      setSelectedPriceRange(requestedPriceRange);
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    const handleBannerCategory = (event: Event) => {
+      if (!(event instanceof CustomEvent) || typeof event.detail !== "string") {
+        return;
+      }
+
+      const requestedCategory = event.detail.trim().toLowerCase();
+      const matchedCategory = categories.find(
+        (category) => category.key === requestedCategory
+      );
+      if (matchedCategory) {
+        setSelectedCategory(matchedCategory.key);
+      }
+    };
+
+    window.addEventListener("catalog-banner-category", handleBannerCategory);
+    return () =>
+      window.removeEventListener("catalog-banner-category", handleBannerCategory);
+  }, [categories]);
+
+  const searchAndCategoryFilteredProducts = useMemo(() => {
+    const normalizedSearch = deferredSearchQuery.trim().toLowerCase();
+    const searchedProducts = products.filter(
+      (product) =>
+        normalizedSearch === "" ||
+        product.name.toLowerCase().includes(normalizedSearch) ||
+        (product.description || "").toLowerCase().includes(normalizedSearch)
+    );
+    const categoryFilteredProducts = searchedProducts.filter(
+      (product) =>
+        deferredSelectedCategory === null ||
+        product.category.trim().toLowerCase() === deferredSelectedCategory
+    );
+
+    return categoryFilteredProducts;
+  }, [products, deferredSearchQuery, deferredSelectedCategory]);
+
+  const priceRangeCounts = useMemo(() => {
+    const productsToCount = deferredInStockOnly
+      ? searchAndCategoryFilteredProducts.filter(
+          (product) => Number.isFinite(product.stock) && product.stock > 0
+        )
+      : searchAndCategoryFilteredProducts;
+    const counts = new Map<PriceRangeId, number>();
+    PRICE_RANGES.forEach((range) => counts.set(range.id, 0));
+
+    productsToCount.forEach((product) => {
+      const range = getPriceRangeForValue(product.retail_price);
+      if (range) {
+        counts.set(range.id, (counts.get(range.id) ?? 0) + 1);
+      }
+    });
+
+    return { allPrices: productsToCount.length, byRange: counts };
+  }, [searchAndCategoryFilteredProducts, deferredInStockOnly]);
+
+  const filteredProducts = useMemo(() => {
+    const selectedRange = PRICE_RANGES.find(
+      (range) => range.id === deferredSelectedPriceRange
+    );
+    const priceFilteredProducts = selectedRange
+      ? searchAndCategoryFilteredProducts.filter(
+          (product) =>
+            getPriceRangeForValue(product.retail_price)?.id === selectedRange.id
+        )
+      : searchAndCategoryFilteredProducts;
+    const stockFilteredProducts = deferredInStockOnly
+      ? priceFilteredProducts.filter(
+          (product) => Number.isFinite(product.stock) && product.stock > 0
+        )
+      : priceFilteredProducts;
+
+    return [...stockFilteredProducts].sort((a, b) => {
+      if (
+        deferredSortOption === "price-low-to-high" ||
+        deferredSortOption === "price-high-to-low"
+      ) {
+        const aMissingPrice = !Number.isFinite(a.retail_price) || a.retail_price === 0;
+        const bMissingPrice = !Number.isFinite(b.retail_price) || b.retail_price === 0;
+        if (aMissingPrice !== bMissingPrice) {
+          return aMissingPrice ? 1 : -1;
+        }
+
+        const priceOrder =
+          deferredSortOption === "price-low-to-high"
+            ? a.retail_price - b.retail_price
+            : b.retail_price - a.retail_price;
+        return priceOrder || b.originalRowIndex - a.originalRowIndex;
+      }
+
+      if (deferredSortOption === "name-a-to-z") {
+        return (
+          a.name.localeCompare(b.name, undefined, { sensitivity: "base" }) ||
+          b.originalRowIndex - a.originalRowIndex
+        );
+      }
+
+      return b.originalRowIndex - a.originalRowIndex;
+    });
+  }, [
+    searchAndCategoryFilteredProducts,
+    deferredSelectedPriceRange,
+    deferredInStockOnly,
+    deferredSortOption,
+  ]);
+
+  const handleSearchQueryChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setVisibleProductCount(PRODUCTS_PER_BATCH);
+  }, []);
+
+  const handleSelectedCategoryChange = useCallback((value: string | null) => {
+    setSelectedCategory(value);
+    setVisibleProductCount(PRODUCTS_PER_BATCH);
+  }, []);
+
+  const handleSelectedPriceRangeChange = useCallback(
+    (value: PriceRangeId | null) => {
+      setSelectedPriceRange(value);
+      setVisibleProductCount(PRODUCTS_PER_BATCH);
+
+      const url = new URL(window.location.href);
+      if (value) {
+        url.searchParams.set("price", value);
+      } else {
+        url.searchParams.delete("price");
+      }
+      window.history.replaceState(window.history.state, "", url.toString());
+    },
+    []
+  );
+
+  const handleSortOptionChange = useCallback((value: SortOption) => {
+    setSortOption(value);
+    setVisibleProductCount(PRODUCTS_PER_BATCH);
+  }, []);
+
+  const handleInStockOnlyChange = useCallback((value: boolean) => {
+    setInStockOnly(value);
+    setVisibleProductCount(PRODUCTS_PER_BATCH);
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setSearchQuery("");
+    setSelectedCategory(null);
+    setSelectedPriceRange(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("price");
+    window.history.replaceState(window.history.state, "", url.toString());
+    setInStockOnly(false);
+    setSortOption(DEFAULT_SORT);
+    setVisibleProductCount(PRODUCTS_PER_BATCH);
+  }, []);
+
+  const visibleProducts = filteredProducts.slice(0, visibleProductCount);
+
+  return (
+    <div className="min-h-screen bg-surface">
+      <SiteHeader home />
+      <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 md:flex-row md:items-start">
+        {loading ? (
+          <aside
+            className="hidden h-fit w-56 shrink-0 animate-pulse rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:block"
+            aria-hidden="true"
+          >
+            <div className="mb-4 h-4 w-2/3 rounded bg-gray-200" />
+            <div className="space-y-3">
+              <div className="h-9 w-full rounded-lg bg-gray-200" />
+              <div className="h-9 w-full rounded-lg bg-gray-200" />
+              <div className="h-9 w-4/5 rounded-lg bg-gray-200" />
+              <div className="h-9 w-11/12 rounded-lg bg-gray-200" />
+            </div>
+          </aside>
+        ) : (
+          <CategoryFilter
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectedCategoryChange={handleSelectedCategoryChange}
+            selectedPriceRange={selectedPriceRange}
+            priceRangeCounts={priceRangeCounts.byRange}
+            allPricesCount={priceRangeCounts.allPrices}
+            onSelectedPriceRangeChange={handleSelectedPriceRangeChange}
+          />
+        )}
+        <section className="min-w-0 flex-1">
+          <FilterBar
+            searchQuery={searchQuery}
+            onSearchQueryChange={handleSearchQueryChange}
+            sortOption={sortOption}
+            onSortOptionChange={handleSortOptionChange}
+            inStockOnly={inStockOnly}
+            onInStockOnlyChange={handleInStockOnlyChange}
+            resultCount={filteredProducts.length}
+          />
+          {loading ? (
+            <div role="status" aria-busy="true">
+              <span className="sr-only">Loading products</span>
+              <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }, (_, index) => (
+                  <ProductCardSkeleton key={index} />
+                ))}
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+              <p role="alert" className="text-gray-700">
+                {error}
+              </p>
+              <button
+                type="button"
+                onClick={() => void loadProducts()}
+                className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark hover:text-brand-soft"
+              >
+                Try again
+              </button>
+            </div>
+          ) : (
+            <>
+              {filteredProducts.length === 0 ? (
+                <div className="text-center py-16">
+                  <p className="text-gray-400 text-lg">No products match your filters</p>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark hover:text-brand-soft"
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {visibleProducts.map((product, index) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      eagerImage={index < EAGER_PRODUCT_IMAGE_COUNT}
+                    />
+                  ))}
+                </div>
+              )}
+              {visibleProducts.length < filteredProducts.length && (
+                <div className="mt-8 text-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVisibleProductCount((count) => count + PRODUCTS_PER_BATCH)
+                    }
+                    className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-dark hover:text-brand-soft"
+                  >
+                    Load more
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      </main>
+      <Cart />
+      <Footer />
+    </div>
+  );
+}
+
+function getSampleProducts(): Product[] {
+  return [
+    {
+      id: "premium-silk-saree",
+      name: "Premium Silk Saree",
+      description: "Handwoven Banarasi silk saree with gold zari work",
+      category: "Clothing",
+      mrp: 12999,
+      retail_price: 9999,
+      wholesale_price: 7499,
+      images: [
+        "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400",
+        "https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=400",
+        "https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=400",
+      ],
+      stock: 25,
+      originalRowIndex: 0,
+    }
+  ];
+}

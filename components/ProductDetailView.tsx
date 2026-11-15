@@ -55,7 +55,7 @@ export default function ProductDetailView({
               <ProductImage
                 key={`${product.images[selectedImage]}-${selectedImage}`}
                 src={product.images[selectedImage]}
-                alt={`${product.name} - Image ${selectedImage + 1}`}
+                alt={product.name}
                 width={800}
                 height={800}
                 loading={selectedImage === 0 ? "eager" : "lazy"}
@@ -124,7 +124,7 @@ export default function ProductDetailView({
               >
                 <ProductImage
                   src={image}
-                  alt=""
+                  alt={product.name}
                   width={64}
                   height={64}
                   loading="lazy"

@@ -3,7 +3,10 @@
 import React from "react";
 import Link from "next/link";
 import VisitorCounter from "./VisitorCounter";
-import { BUSINESS_PROFILE } from "@/lib/businessProfile";
+import {
+  BUSINESS_PROFILE,
+  BUSINESS_SOCIAL_LINKS,
+} from "@/lib/businessProfile";
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -43,19 +46,19 @@ function MailIcon({ className }: { className?: string }) {
 const footerLinks = [
   {
     label: "@nhentrprises",
-    href: "https://instagram.com/nhentrprises",
+    href: BUSINESS_SOCIAL_LINKS[0],
     icon: InstagramIcon,
     color: "hover:text-pink-400",
   },
   {
     label: "Join our WhatsApp Group",
-    href: "https://chat.whatsapp.com/JfALSlcxJJlExgWDY8hmtX",
+    href: BUSINESS_SOCIAL_LINKS[1],
     icon: MessageCircleIcon,
     color: "hover:text-green-400",
   },
   {
     label: "Facebook",
-    href: "https://www.facebook.com/profile.php?id=61568503961128",
+    href: BUSINESS_SOCIAL_LINKS[2],
     icon: FacebookIcon,
     color: "hover:text-blue-400",
   },

@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   description:
     "Discover curated jewellery, sarees, clothing, books, gifts and everyday essentials. Shop with confidence through NH Enterprises.",
   alternates: { canonical: "/" },
+  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? {
+        verification: {
+          google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+        },
+      }
+    : {}),
   openGraph: {
     type: "website",
     siteName: BUSINESS_PROFILE.name,
@@ -34,41 +41,15 @@ const themeBootstrapScript = createThemeBootstrapScript(
   process.env.NEXT_PUBLIC_FORCE_THEME
 );
 
-const organizationStructuredData = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: BUSINESS_PROFILE.name,
-  url: SITE_URL,
-  email: BUSINESS_PROFILE.email,
-  telephone: BUSINESS_PROFILE.whatsappDisplay,
-  taxID: BUSINESS_PROFILE.gstin,
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: "Mogappair West",
-    addressLocality: "Chennai",
-    postalCode: "600037",
-    addressCountry: "IN",
-  },
-};
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en-IN" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationStructuredData).replace(
-              /</g,
-              "\\u003c"
-            ),
-          }}
-        />
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
