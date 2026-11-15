@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { normalizeStatus, ORDER_STATUS } from "@/lib/order-status";
+import { sendOrderAlert } from "@/lib/orderAlert";
 
 export async function GET() {
   try {
@@ -78,13 +79,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const orderItems = items.map((item: any) => ({
-      order_no: orderNo,
-      product_name: item.name,
-      quantity: item.quantity,
-      price: item.price,
-      amount: item.price * item.quantity,
-    }));
+    const orderItems: {
+      order_no: string;
+      product_name: string;
+      quantity: number;
+      price: number;
+      amount: number;
+    }[] = items.map(
+      (item: { name: string; quantity: number; price: number }) => ({
+        order_no: orderNo,
+        product_name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        amount: item.price * item.quantity,
+      })
+    );
 
     const { error: itemError } = await supabaseAdmin
       .from("order_items")
@@ -96,6 +105,30 @@ export async function POST(request: Request) {
         { error: itemError.message },
         { status: 500 }
       );
+    }
+
+    let alertTimeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([
+        sendOrderAlert({
+          orderNo: String(orderNo),
+          grandTotal,
+          createdAt: new Date().toISOString(),
+          customerName: String(customerName ?? ""),
+          pincode: String(pincode ?? ""),
+          items: orderItems.map((item) => ({
+            name: item.product_name,
+            quantity: item.quantity,
+          })),
+        }),
+        new Promise<void>((resolve) => {
+          alertTimeout = setTimeout(resolve, 5000);
+        }),
+      ]);
+    } catch {
+      console.error("Order alert failed");
+    } finally {
+      if (alertTimeout) clearTimeout(alertTimeout);
     }
 
     return NextResponse.json({
