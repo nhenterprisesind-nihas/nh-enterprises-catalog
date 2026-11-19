@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { normalizeStatus, ORDER_STATUS } from "@/lib/order-status";
 import { sendOrderAlert } from "@/lib/orderAlert";
 import { getProducts } from "@/lib/products";
+import { normalizeIndianMobileNumber } from "@/lib/indian-mobile";
 
 export async function GET() {
   try {
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
     const {
       orderNo,
       customerName,
-      phone,
+      phone: rawPhone,
       address,
       pincode,
       subtotal,
@@ -55,6 +56,17 @@ export async function POST(request: Request) {
       grandTotal,
       items,
     } = body;
+
+    const phone = normalizeIndianMobileNumber(rawPhone);
+    if (!phone) {
+      return NextResponse.json(
+        {
+          error:
+            "Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.",
+        },
+        { status: 400 }
+      );
+    }
 
     const products = await getProducts();
     const productsByName = new Map(
@@ -78,7 +90,7 @@ export async function POST(request: Request) {
       ]);
 
     if (orderError) {
-      console.error(orderError);
+      console.error("Order insert failed.");
       return NextResponse.json(
         { error: orderError.message },
         { status: 500 }
@@ -113,7 +125,7 @@ export async function POST(request: Request) {
       .insert(orderItems);
 
     if (itemError) {
-      console.error(itemError);
+      console.error("Order item insert failed.");
       return NextResponse.json(
         { error: itemError.message },
         { status: 500 }
@@ -149,7 +161,7 @@ export async function POST(request: Request) {
       orderNo,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Order request failed.");
 
     return NextResponse.json(
       {
