@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { normalizeStatus, ORDER_STATUS } from "@/lib/order-status";
 import { sendOrderAlert } from "@/lib/orderAlert";
+import { getProducts } from "@/lib/products";
 
 export async function GET() {
   try {
@@ -55,6 +56,11 @@ export async function POST(request: Request) {
       items,
     } = body;
 
+    const products = await getProducts();
+    const productsByName = new Map(
+      products.map((product) => [product.name.trim().toLowerCase(), product])
+    );
+
     const { error: orderError } = await supabaseAdmin
       .from("orders")
       .insert([
@@ -85,14 +91,21 @@ export async function POST(request: Request) {
       quantity: number;
       price: number;
       amount: number;
+      product_id: string | null;
+      category: string | null;
     }[] = items.map(
-      (item: { name: string; quantity: number; price: number }) => ({
-        order_no: orderNo,
-        product_name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        amount: item.price * item.quantity,
-      })
+      (item: { name: string; quantity: number; price: number }) => {
+        const product = productsByName.get(item.name.trim().toLowerCase());
+        return {
+          order_no: orderNo,
+          product_name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          amount: item.price * item.quantity,
+          product_id: product?.id ?? null,
+          category: product ? product.category.trim() : null,
+        };
+      }
     );
 
     const { error: itemError } = await supabaseAdmin
