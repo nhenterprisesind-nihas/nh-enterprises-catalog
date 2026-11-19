@@ -3,7 +3,7 @@ import { BUSINESS_PROFILE } from "@/lib/businessProfile";
 export default function SiteHeader({ home = false }: { home?: boolean }) {
   const brandName = home ? (
     <h1 className="text-xl font-bold tracking-tight text-brand-soft sm:text-2xl">
-      {BUSINESS_PROFILE.name}
+      Nikshas Collections
     </h1>
   ) : (
     <p className="text-xl font-bold tracking-tight text-brand-soft sm:text-2xl">
