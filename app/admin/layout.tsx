@@ -22,6 +22,7 @@ export default async function AdminLayout({
   const isDashboard = pathname === "/admin";
   const isOrders = pathname.startsWith("/admin/orders");
   const isTestimonials = pathname.startsWith("/admin/testimonials");
+  const isReports = pathname.startsWith("/admin/reports");
   const isInvoice = pathname.includes("/invoice");
 
   if (isInvoice) {
@@ -33,9 +34,9 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex">
+    <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col">
+      <aside className="w-full bg-slate-900 text-white flex flex-col md:w-64 md:shrink-0">
         <div className="p-6 border-b border-slate-700">
           <h1 className="text-xl font-bold">
             NH ENTERPRISES
@@ -81,8 +82,12 @@ export default async function AdminLayout({
           </Link>
 
           <Link
-            href="#"
-            className="block rounded-lg px-4 py-3 text-slate-500 cursor-not-allowed"
+            href="/admin/reports"
+            className={`block rounded-lg px-4 py-3 transition ${
+              isReports
+                ? "bg-brand text-on-brand"
+                : "hover:bg-slate-800"
+            }`}
           >
             📈 Reports
           </Link>
@@ -98,7 +103,7 @@ export default async function AdminLayout({
       </aside>
 
       {/* Content */}
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="min-w-0 flex-1 p-4 md:p-8 overflow-auto">
         {children}
       </main>
     </div>
