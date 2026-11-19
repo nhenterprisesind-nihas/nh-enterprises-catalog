@@ -261,6 +261,9 @@ export default function AdminReportsPage() {
   const setRangeAndUrl = useCallback(
     (nextRange: DateRange, nextPreset: Preset = "custom") => {
       setPreset(nextPreset);
+      setData(null);
+      setLoading(true);
+      setError("");
       setRange(nextRange);
       syncUrl(tab, nextRange);
     },
@@ -268,6 +271,11 @@ export default function AdminReportsPage() {
   );
 
   function selectTab(nextTab: ReportTab) {
+    if (nextTab !== tab) {
+      setData(null);
+      setLoading(true);
+      setError("");
+    }
     setTab(nextTab);
     syncUrl(nextTab, range);
   }
