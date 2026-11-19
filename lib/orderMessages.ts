@@ -127,3 +127,33 @@ export function buildStatusMessage(
 
   return fitMessage([message]);
 }
+
+export function buildCourierDispatchedMessage(
+  order: OrderMessageOrder,
+  courier: string,
+  trackingNumber: string,
+  expectedDelivery: string
+): string {
+  const name = firstName(order.customer_name);
+  const greeting = name ? `Hi ${name}` : "Hi";
+
+  return fitMessage([
+    `${greeting}, your order ${cleanLine(order.order_no)} has been dispatched by courier.`,
+    `Courier: ${cleanLine(courier)}`,
+    `Tracking no: ${cleanLine(trackingNumber)}`,
+    `Expected delivery: ${cleanLine(expectedDelivery)}`,
+    "Message us here if you need any help.",
+  ]);
+}
+
+export function buildLocalDeliveryMessage(
+  order: OrderMessageOrder,
+  expectedDay: string
+): string {
+  const name = firstName(order.customer_name);
+  const greeting = name ? `Hi ${name}` : "Hi";
+
+  return fitMessage([
+    `${greeting}, your order ${cleanLine(order.order_no)} is on its way with our delivery person and should reach you ${cleanLine(expectedDay)}. Please keep your phone handy.`,
+  ]);
+}

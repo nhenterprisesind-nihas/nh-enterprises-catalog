@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { use } from "react";
 import { ORDER_STATUS, type OrderStatus } from "@/lib/order-status";
 import {
+  buildCourierDispatchedMessage,
   buildConfirmationMessage,
+  buildLocalDeliveryMessage,
   buildStatusMessage,
 } from "@/lib/orderMessages";
 import { normalizeIndianMobileNumber } from "@/lib/indian-mobile";
+
+type DispatchDialog = "courier" | "local" | null;
+type ExpectedDayChoice = "" | "Today" | "Tomorrow" | "date";
 
 interface Order {
   order_no: string;
@@ -64,6 +69,15 @@ export default function OrderDetailsPage({
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [messageActionError, setMessageActionError] = useState("");
   const [copyNotice, setCopyNotice] = useState("");
+  const [dispatchDialog, setDispatchDialog] = useState<DispatchDialog>(null);
+  const [courierName, setCourierName] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [expectedDelivery, setExpectedDelivery] = useState("");
+  const [expectedDayChoice, setExpectedDayChoice] =
+    useState<ExpectedDayChoice>("");
+  const [expectedLocalDate, setExpectedLocalDate] = useState("");
+  const [preparedDispatchMessage, setPreparedDispatchMessage] =
+    useState<string | null>(null);
 
   useEffect(() => {
     loadOrder();
@@ -169,6 +183,67 @@ export default function OrderDetailsPage({
     }
   }
 
+  function openDispatchDialog(dialog: Exclude<DispatchDialog, null>) {
+    setDispatchDialog(dialog);
+    setPreparedDispatchMessage(null);
+    setCopyNotice("");
+    setMessageActionError("");
+    if (dialog === "courier") {
+      setCourierName("");
+      setTrackingNumber("");
+      setExpectedDelivery("");
+    } else {
+      setExpectedDayChoice("");
+      setExpectedLocalDate("");
+    }
+  }
+
+  function sendDispatchMessage(message: string) {
+    if (!customerPhone) return;
+
+    setPreparedDispatchMessage(message);
+    setDispatchDialog(null);
+    setMessageActionError("");
+    const url = `https://wa.me/91${customerPhone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    void markConfirmationOpened();
+  }
+
+  function submitCourierMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!order) return;
+    if (
+      !courierName.trim() ||
+      !trackingNumber.trim() ||
+      !expectedDelivery
+    ) {
+      setMessageActionError("Please complete all required fields.");
+      return;
+    }
+
+    sendDispatchMessage(
+      buildCourierDispatchedMessage(
+        order,
+        courierName,
+        trackingNumber,
+        expectedDelivery
+      )
+    );
+  }
+
+  function submitLocalDeliveryMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!order) return;
+    const expectedDay =
+      expectedDayChoice === "date" ? expectedLocalDate : expectedDayChoice;
+    if (!expectedDay) {
+      setMessageActionError("Please choose an expected day.");
+      return;
+    }
+
+    sendDispatchMessage(buildLocalDeliveryMessage(order, expectedDay));
+  }
+
   if (loading) {
     return <div className="text-xl">Loading...</div>;
   }
@@ -181,10 +256,15 @@ export default function OrderDetailsPage({
   const customerMessage =
     order.status === ORDER_STATUS.PLACED
       ? buildConfirmationMessage(order, items)
+      : order.status === ORDER_STATUS.DISPATCHED
+      ? preparedDispatchMessage ?? buildStatusMessage(order, order.status)
       : buildStatusMessage(order, order.status);
   const customerWhatsAppUrl = customerPhone
     ? `https://wa.me/91${customerPhone}?text=${encodeURIComponent(customerMessage)}`
     : null;
+  const canCopyCustomerMessage =
+    order.status !== ORDER_STATUS.DISPATCHED ||
+    preparedDispatchMessage !== null;
 
   return (
     <div className="space-y-8">
@@ -280,38 +360,78 @@ export default function OrderDetailsPage({
         )}
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
-          <a
-            href={customerWhatsAppUrl ?? undefined}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-disabled={!customerWhatsAppUrl}
-            tabIndex={customerWhatsAppUrl ? undefined : -1}
-            title={
-              customerWhatsAppUrl
-                ? undefined
-                : "Customer phone must be a valid 10-digit Indian mobile number."
-            }
-            onClick={(event) => {
-              if (!customerWhatsAppUrl) {
-                event.preventDefault();
-                return;
+          {order.status === ORDER_STATUS.DISPATCHED ? (
+            <>
+              <button
+                type="button"
+                onClick={() => openDispatchDialog("courier")}
+                disabled={!customerPhone}
+                title={
+                  customerPhone
+                    ? undefined
+                    : "Customer phone must be a valid 10-digit Indian mobile number."
+                }
+                className={`min-h-11 rounded-lg px-5 py-2 font-semibold text-white ${
+                  customerPhone
+                    ? "bg-green-700 hover:bg-green-800"
+                    : "cursor-not-allowed bg-green-700 opacity-50"
+                }`}
+              >
+                Dispatched by courier
+              </button>
+              <button
+                type="button"
+                onClick={() => openDispatchDialog("local")}
+                disabled={!customerPhone}
+                title={
+                  customerPhone
+                    ? undefined
+                    : "Customer phone must be a valid 10-digit Indian mobile number."
+                }
+                className={`min-h-11 rounded-lg px-5 py-2 font-semibold text-white ${
+                  customerPhone
+                    ? "bg-green-700 hover:bg-green-800"
+                    : "cursor-not-allowed bg-green-700 opacity-50"
+                }`}
+              >
+                Local delivery
+              </button>
+            </>
+          ) : (
+            <a
+              href={customerWhatsAppUrl ?? undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-disabled={!customerWhatsAppUrl}
+              tabIndex={customerWhatsAppUrl ? undefined : -1}
+              title={
+                customerWhatsAppUrl
+                  ? undefined
+                  : "Customer phone must be a valid 10-digit Indian mobile number."
               }
-              void markConfirmationOpened();
-            }}
-            className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-5 py-2 font-semibold text-white ${
-              customerWhatsAppUrl
-                ? "bg-green-700 hover:bg-green-800"
-                : "cursor-not-allowed bg-green-700 opacity-50"
-            }`}
-          >
-            <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20.52 3.48A11.86 11.86 0 0012.05 0C5.5 0 .16 5.34.16 11.89c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.9 11.9 0 005.68 1.45h.01c6.55 0 11.89-5.34 11.89-11.9a11.83 11.83 0 00-3.42-8.42zM12.05 21.8h-.01a9.9 9.9 0 01-5.04-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.87 9.87 0 01-1.51-5.28c0-5.46 4.44-9.9 9.9-9.9a9.84 9.84 0 017 2.9 9.83 9.83 0 012.89 7c0 5.46-4.44 9.9-9.89 9.9zm5.43-7.41c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.08-.3-.15-1.26-.47-2.4-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.91-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.06 2.88 1.21 3.08.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35z" />
-            </svg>
-            WhatsApp customer
-          </a>
+              onClick={(event) => {
+                if (!customerWhatsAppUrl) {
+                  event.preventDefault();
+                  return;
+                }
+                void markConfirmationOpened();
+              }}
+              className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-5 py-2 font-semibold text-white ${
+                customerWhatsAppUrl
+                  ? "bg-green-700 hover:bg-green-800"
+                  : "cursor-not-allowed bg-green-700 opacity-50"
+              }`}
+            >
+              <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.52 3.48A11.86 11.86 0 0012.05 0C5.5 0 .16 5.34.16 11.89c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.9 11.9 0 005.68 1.45h.01c6.55 0 11.89-5.34 11.89-11.9a11.83 11.83 0 00-3.42-8.42zM12.05 21.8h-.01a9.9 9.9 0 01-5.04-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.87 9.87 0 01-1.51-5.28c0-5.46 4.44-9.9 9.9-9.9a9.84 9.84 0 017 2.9 9.83 9.83 0 012.89 7c0 5.46-4.44 9.9-9.89 9.9zm5.43-7.41c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.08-.3-.15-1.26-.47-2.4-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.91-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.06 2.88 1.21 3.08.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35z" />
+              </svg>
+              WhatsApp customer
+            </a>
+          )}
           <button
             type="button"
             onClick={() => void copyCustomerMessage(customerMessage)}
+            disabled={!canCopyCustomerMessage}
             className="min-h-11 rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
           >
             Copy message
@@ -328,6 +448,133 @@ export default function OrderDetailsPage({
             <span className="text-sm text-red-700" role="alert">{messageActionError}</span>
           )}
         </div>
+
+        {dispatchDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="dispatch-dialog-title"
+              className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            >
+              <h2 id="dispatch-dialog-title" className="mb-5 text-xl font-bold">
+                {dispatchDialog === "courier"
+                  ? "Dispatched by courier"
+                  : "Local delivery"}
+              </h2>
+              {messageActionError && (
+                <p className="mb-4 text-sm text-red-700" role="alert">
+                  {messageActionError}
+                </p>
+              )}
+              {dispatchDialog === "courier" ? (
+                <form onSubmit={submitCourierMessage} className="space-y-4">
+                  <label className="block space-y-1">
+                    <span className="font-medium">Courier name</span>
+                    <input
+                      type="text"
+                      required
+                      value={courierName}
+                      onChange={(event) => setCourierName(event.target.value)}
+                      className="w-full rounded border border-slate-300 px-3 py-2"
+                    />
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="font-medium">Tracking number</span>
+                    <input
+                      type="text"
+                      required
+                      value={trackingNumber}
+                      onChange={(event) => setTrackingNumber(event.target.value)}
+                      className="w-full rounded border border-slate-300 px-3 py-2"
+                    />
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="font-medium">Expected delivery</span>
+                    <input
+                      type="date"
+                      required
+                      value={expectedDelivery}
+                      onChange={(event) => setExpectedDelivery(event.target.value)}
+                      className="w-full rounded border border-slate-300 px-3 py-2"
+                    />
+                  </label>
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setDispatchDialog(null)}
+                      className="rounded border border-slate-300 px-4 py-2"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded bg-green-700 px-4 py-2 font-semibold text-white hover:bg-green-800"
+                    >
+                      Open WhatsApp
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={submitLocalDeliveryMessage} className="space-y-4">
+                  <label className="block space-y-1">
+                    <span className="font-medium">Expected day</span>
+                    <select
+                      required
+                      value={expectedDayChoice}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        if (
+                          value === "" ||
+                          value === "Today" ||
+                          value === "Tomorrow" ||
+                          value === "date"
+                        ) {
+                          setExpectedDayChoice(value);
+                        }
+                      }}
+                      className="w-full rounded border border-slate-300 px-3 py-2"
+                    >
+                      <option value="">Choose expected day</option>
+                      <option value="Today">Today</option>
+                      <option value="Tomorrow">Tomorrow</option>
+                      <option value="date">Choose a date</option>
+                    </select>
+                  </label>
+                  {expectedDayChoice === "date" && (
+                    <label className="block space-y-1">
+                      <span className="font-medium">Expected date</span>
+                      <input
+                        type="date"
+                        required
+                        value={expectedLocalDate}
+                        onChange={(event) =>
+                          setExpectedLocalDate(event.target.value)
+                        }
+                        className="w-full rounded border border-slate-300 px-3 py-2"
+                      />
+                    </label>
+                  )}
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setDispatchDialog(null)}
+                      className="rounded border border-slate-300 px-4 py-2"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded bg-green-700 px-4 py-2 font-semibold text-white hover:bg-green-800"
+                    >
+                      Open WhatsApp
+                    </button>
+                  </div>
+                </form>
+              )}
+            </section>
+          </div>
+        )}
 
         {/* ================================
             CUSTOMER / STATUS
