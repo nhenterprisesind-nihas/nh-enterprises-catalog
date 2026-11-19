@@ -73,6 +73,14 @@ npm run build
 npm start
 ```
 
+## Admin Reports Setup
+
+Admin reports require database functions that are not installed automatically by
+the app. In the Supabase project connected to this deployment, open the SQL
+Editor, run the contents of [`sql/admin_reports.sql`](./sql/admin_reports.sql),
+and then reload the Reports page. The script creates the report functions and
+grants them to `service_role`.
+
 ## Deploy to Vercel
 
 1. Push this project to GitHub

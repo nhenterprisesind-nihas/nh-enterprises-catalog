@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import {
   getReportGroup,
+  isReportDatabaseSetupError,
   noStoreJson,
   parseReportRange,
 } from "@/lib/admin-reports";
@@ -296,6 +297,15 @@ export async function GET(request: NextRequest) {
     return csvResponse(report, range.from, range.to, rows);
   } catch (error) {
     console.error("Admin report export failed", error);
+    if (isReportDatabaseSetupError(error)) {
+      return noStoreJson(
+        {
+          error:
+            "Report database setup is missing or unavailable. Run sql/admin_reports.sql in the Supabase SQL Editor, then retry.",
+        },
+        503
+      );
+    }
     return noStoreJson({ error: "Unable to export report." }, 500);
   }
 }

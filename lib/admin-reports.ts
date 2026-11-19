@@ -68,3 +68,11 @@ export function noStoreJson(body: unknown, status = 200): NextResponse {
     headers: { "Cache-Control": "no-store" },
   });
 }
+
+export function isReportDatabaseSetupError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return false;
+  }
+
+  return error.code === "PGRST202" || error.code === "42883";
+}
