@@ -5,7 +5,11 @@ import { normalizeImageUrl } from "@/lib/images";
 type ProductRow = Record<string, string>;
 
 function createProductId(value: string, name: string, rowIndex: number): string {
-  const providedId = value.trim().toLowerCase();
+  const providedId = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
   if (providedId) return providedId;
 
   const slug = name
@@ -21,6 +25,7 @@ export function parseProducts(csvText: string): Product[] {
   const results = Papa.parse<ProductRow>(csvText, {
     header: true,
     skipEmptyLines: true,
+    transformHeader: (header) => header.trim().toLowerCase(),
   });
   if (results.errors.length > 0) {
     throw new Error("Product CSV is invalid");

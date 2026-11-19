@@ -114,9 +114,8 @@ export default function CatalogClient({
     isMountedRef.current = true;
     if (initialProducts.length > 0) {
       reconcileProducts(initialProducts);
-    } else {
-      void loadProducts();
     }
+    void loadProducts();
 
     return () => {
       isMountedRef.current = false;

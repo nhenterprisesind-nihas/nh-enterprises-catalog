@@ -28,7 +28,25 @@ async function findProduct(id: string[]) {
       (candidate) =>
         candidate.id.toLowerCase() ===
         productId.replace(/(\d+)\/(\d+)/g, "$1by$2").toLowerCase()
-    );
+    ) ??
+    products.find((candidate) => {
+      const nameSlug = candidate.name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      const requestedSlug = productId
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      if (requestedSlug === nameSlug) return true;
+      const candidateBaseSlug = candidate.id.replace(/-\d+$/, "");
+      return (
+        requestedSlug === candidateBaseSlug ||
+        requestedSlug.replace(/-\d+$/, "") === candidateBaseSlug
+      );
+    });
 
   return {
     products,
