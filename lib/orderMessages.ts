@@ -49,14 +49,17 @@ export function buildConfirmationMessage(
 ): string {
   const name = firstName(order.customer_name);
   const greeting = name
-    ? `Hi ${name}, thank you for ordering from ${BRAND_NAME}!`
-    : `Hi, thank you for ordering from ${BRAND_NAME}!`;
+    ? `Hi ${name}, thank you for ordering from *${BRAND_NAME}*! 👋`
+    : `Hi, thank you for ordering from *${BRAND_NAME}*! 👋`;
   const address = cleanLine(order.address);
   const pincode = cleanLine(order.pincode);
 
   const linesForCount = (itemCount: number) => [
     greeting,
-    `Order ${cleanLine(order.order_no)}`,
+    "",
+    `🧾 *Order:* ${cleanLine(order.order_no)}`,
+    "",
+    "🛍️ *Items*",
     ...items.slice(0, itemCount).map(
       (item) =>
         `• ${cleanLine(item.product_name)} × ${item.quantity} – ₹${formatMoney(
@@ -64,12 +67,16 @@ export function buildConfirmationMessage(
         )}`
     ),
     ...(itemCount < items.length ? [`and ${items.length - itemCount} more`] : []),
-    `Subtotal ₹${formatMoney(order.subtotal)}, shipping ₹${formatMoney(
-      order.shipping
-    )}, total ₹${formatMoney(order.grand_total)}`,
-    `Delivery to: ${address}${pincode ? `, ${pincode}` : ""}`,
-    PAYMENT_NOTE,
-    "We'll update you when your order is dispatched.",
+    "",
+    `💰 *Subtotal:* ₹${formatMoney(order.subtotal)}`,
+    `🚚 *Shipping:* ₹${formatMoney(order.shipping)}`,
+    `*Total: ₹${formatMoney(order.grand_total)}*`,
+    "",
+    "📍 *Delivery address*",
+    `${address}${pincode ? `, ${pincode}` : ""}`,
+    "",
+    `💬 ${PAYMENT_NOTE}`,
+    "We'll update you when your order is dispatched. 🚚",
   ];
 
   let itemCount = items.length;

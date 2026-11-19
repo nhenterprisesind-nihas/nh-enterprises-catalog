@@ -28,10 +28,15 @@ test("builds a confirmation message with formatted totals and delivery details",
     { product_name: "Temple necklace", quantity: 2, amount: 2400 },
   ]);
 
-  assert.match(message, /^Hi Priya, thank you for ordering from Nikshas Collections!/);
+  assert.match(
+    message,
+    /^Hi Priya, thank you for ordering from \*Nikshas Collections\*! 👋/
+  );
   assert.match(message, /• Temple necklace × 2 – ₹2,400/);
-  assert.match(message, /Subtotal ₹2,500, shipping ₹100, total ₹2,600/);
-  assert.match(message, /Delivery to: 12 Example Street, 600001/);
+  assert.match(message, /💰 \*Subtotal:\* ₹2,500/);
+  assert.match(message, /🚚 \*Shipping:\* ₹100/);
+  assert.match(message, /\*Total: ₹2,600\*/);
+  assert.match(message, /📍 \*Delivery address\*\n12 Example Street, 600001/);
   assert.match(message, /Please reply YES to confirm/);
 });
 
