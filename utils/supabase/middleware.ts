@@ -49,14 +49,43 @@ try {
   const pathname = request.nextUrl.pathname;
 
   const isLoginPage = pathname === "/login";
-  const isAdminRoute = pathname.startsWith("/admin");
+  const isAdminRoute =
+    pathname === "/admin" || pathname.startsWith("/admin/");
+  const isAccountRoute =
+    pathname === "/account" || pathname.startsWith("/account/");
+  const isAccountLoginPage = pathname === "/account/login";
 
   if (!user && isAdminRoute) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const redirectResponse = NextResponse.redirect(
+      new URL("/login", request.url)
+    );
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
   }
 
-  if (user && isLoginPage) {
-    return NextResponse.redirect(new URL("/admin/orders", request.url));
+  if (!user && isAccountRoute && !isAccountLoginPage) {
+    const loginUrl = new URL("/account/login", request.url);
+    loginUrl.searchParams.set(
+      "next",
+      `${request.nextUrl.pathname}${request.nextUrl.search}`
+    );
+    const redirectResponse = NextResponse.redirect(loginUrl);
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
+  }
+
+  if (user && isLoginPage && user.app_metadata?.role === "admin") {
+    const redirectResponse = NextResponse.redirect(
+      new URL("/admin/orders", request.url)
+    );
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
   }
 
   return response;

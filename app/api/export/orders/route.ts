@@ -2,8 +2,14 @@ import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { normalizeStatus } from "@/lib/order-status";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 
 export async function GET() {
+  const authorizationError = await requireAdmin();
+  if (authorizationError) {
+    return authorizationError;
+  }
+
   try {
     const [{ data: orders, error: ordersError }, { data: items, error: itemsError }] =
       await Promise.all([

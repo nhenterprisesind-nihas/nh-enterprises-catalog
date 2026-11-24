@@ -5,8 +5,14 @@ import {
   ORDER_STATUS,
   type OrderStatus,
 } from "@/lib/order-status";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 
 export async function PATCH(request: NextRequest) {
+  const authorizationError = await requireAdmin();
+  if (authorizationError) {
+    return authorizationError;
+  }
+
   try {
     const { orderNo, status } = await request.json();
 

@@ -4,8 +4,14 @@ import { normalizeStatus, ORDER_STATUS } from "@/lib/order-status";
 import { sendOrderAlert } from "@/lib/orderAlert";
 import { getProducts } from "@/lib/products";
 import { normalizeIndianMobileNumber } from "@/lib/indian-mobile";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 
 export async function GET() {
+  const authorizationError = await requireAdmin();
+  if (authorizationError) {
+    return authorizationError;
+  }
+
   try {
     const { data, error } = await supabaseAdmin
       .from("orders")

@@ -3,6 +3,7 @@ import PDFDocument from "pdfkit";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { normalizeStatus } from "@/lib/order-status";
 import path from "path";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -96,6 +97,11 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ orderNo: string }> }
 ) {
+  const authorizationError = await requireAdmin();
+  if (authorizationError) {
+    return authorizationError;
+  }
+
   const { orderNo } = await params;
 
   const { data: fetchedOrder, error: orderError } = await supabaseAdmin

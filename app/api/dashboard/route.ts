@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { normalizeStatus, ORDER_STATUS } from "@/lib/order-status";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 
 export async function GET(request: NextRequest) {
+  const authorizationError = await requireAdmin();
+  if (authorizationError) {
+    return authorizationError;
+  }
+
   try {
     const searchParams = request.nextUrl.searchParams;
 

@@ -9,6 +9,7 @@ import {
 } from "@/lib/gst";
 import { normalizeStatus } from "@/lib/order-status";
 import path from "path";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -366,6 +367,11 @@ export async function GET(
     }>;
   }
 ) {
+  const authorizationError = await requireAdmin();
+  if (authorizationError) {
+    return authorizationError;
+  }
+
   const { orderNo } =
     await params;
 

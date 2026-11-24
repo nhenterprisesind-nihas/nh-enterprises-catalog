@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
 import LogoutButton from "@/components/LogoutButton";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -14,6 +16,11 @@ export default async function AdminLayout({
   children: ReactNode;
 }) {
   const headersList = await headers();
+  const authorizationError = await requireAdmin();
+  if (authorizationError) {
+    redirect("/login");
+  }
+
   const pathname =
     headersList.get("x-next-pathname") ||
     headersList.get("next-url") ||
