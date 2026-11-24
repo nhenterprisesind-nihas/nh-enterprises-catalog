@@ -5,6 +5,7 @@ import { sendOrderAlert } from "@/lib/orderAlert";
 import { getProducts } from "@/lib/products";
 import { normalizeIndianMobileNumber } from "@/lib/indian-mobile";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
+import { createClient } from "@/lib/supabase-server";
 
 export async function GET() {
   const authorizationError = await requireAdmin();
@@ -48,6 +49,23 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  let userId: string | null = null;
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error) {
+      console.error("Could not verify account session for order.");
+    } else {
+      userId = user?.id ?? null;
+    }
+  } catch {
+    console.error("Could not verify account session for order.");
+  }
+
   try {
     const body = await request.json();
 
@@ -88,6 +106,7 @@ export async function POST(request: Request) {
           phone,
           address,
           pincode,
+          user_id: userId,
           subtotal,
           shipping,
           grand_total: grandTotal,
@@ -165,6 +184,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       orderNo,
+      accountOrder: userId !== null,
     });
   } catch (err) {
     console.error("Order request failed.");

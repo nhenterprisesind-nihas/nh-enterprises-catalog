@@ -27,6 +27,8 @@ interface Order {
   status: OrderStatus;
   created_at: string;
   confirmation_opened_at: string | null;
+  user_id: string | null;
+  customer_update: string | null;
   courier?: string | null;
   tracking_number?: string | null;
 }
@@ -72,6 +74,10 @@ export default function OrderDetailsPage({
   const [dispatchDialog, setDispatchDialog] = useState<DispatchDialog>(null);
   const [courierName, setCourierName] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [customerUpdate, setCustomerUpdate] = useState("");
+  const [savingCustomerUpdate, setSavingCustomerUpdate] = useState(false);
+  const [customerUpdateMessage, setCustomerUpdateMessage] = useState("");
+  const [customerUpdateError, setCustomerUpdateError] = useState("");
   const [expectedDelivery, setExpectedDelivery] = useState("");
   const [expectedDayChoice, setExpectedDayChoice] =
     useState<ExpectedDayChoice>("");
@@ -100,10 +106,49 @@ export default function OrderDetailsPage({
 
       setOrder(data.order);
       setItems(data.items);
+      setCustomerUpdate(data.order.customer_update ?? "");
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function saveCustomerUpdate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!order) return;
+
+    setSavingCustomerUpdate(true);
+    setCustomerUpdateMessage("");
+    setCustomerUpdateError("");
+    try {
+      const response = await fetch(
+        `/api/admin/orders/${encodeURIComponent(order.order_no)}/customer-update`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customerUpdate }),
+        }
+      );
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Unable to save the customer update.");
+      }
+
+      const savedUpdate = result.customer_update ?? "";
+      setCustomerUpdate(savedUpdate);
+      setOrder((current) =>
+        current ? { ...current, customer_update: savedUpdate || null } : current
+      );
+      setCustomerUpdateMessage("Customer update saved.");
+    } catch (error) {
+      setCustomerUpdateError(
+        error instanceof Error
+          ? error.message
+          : "Unable to save the customer update."
+      );
+    } finally {
+      setSavingCustomerUpdate(false);
     }
   }
 
@@ -275,9 +320,16 @@ export default function OrderDetailsPage({
       <div className="rounded-xl bg-white p-6 shadow">
         <div className="flex items-center justify-between">
 
-          <h1 className="text-3xl font-bold">
-            Order {order.order_no}
-          </h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-bold">
+              Order {order.order_no}
+            </h1>
+            {order.user_id && (
+              <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand-dark">
+                Account order
+              </span>
+            )}
+          </div>
 
           <div className="flex gap-3">
 
@@ -711,6 +763,52 @@ export default function OrderDetailsPage({
           </div>
         </div>
       </div>
+
+      <section className="rounded-xl bg-white p-5 shadow sm:p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Customer update
+          </h2>
+          <p className="text-sm text-gray-500">
+            The customer sees this in their account
+          </p>
+        </div>
+        <form onSubmit={saveCustomerUpdate} className="mt-4">
+          <label htmlFor="customer-update" className="sr-only">
+            Customer update
+          </label>
+          <textarea
+            id="customer-update"
+            maxLength={500}
+            rows={4}
+            value={customerUpdate}
+            onChange={(event) => setCustomerUpdate(event.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-dark focus:ring-2 focus:ring-brand/30"
+          />
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs text-gray-500">
+              {customerUpdate.length}/500
+            </span>
+            <button
+              type="submit"
+              disabled={savingCustomerUpdate}
+              className="min-h-11 rounded-lg bg-brand px-4 py-2 font-semibold text-on-brand hover:bg-brand-dark hover:text-brand-soft disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {savingCustomerUpdate ? "Saving..." : "Save"}
+            </button>
+          </div>
+          {customerUpdateMessage && (
+            <p className="mt-3 text-sm text-green-700" role="status">
+              {customerUpdateMessage}
+            </p>
+          )}
+          {customerUpdateError && (
+            <p className="mt-3 text-sm text-red-700" role="alert">
+              {customerUpdateError}
+            </p>
+          )}
+        </form>
+      </section>
 
       {/* ================================
           ORDER ITEMS

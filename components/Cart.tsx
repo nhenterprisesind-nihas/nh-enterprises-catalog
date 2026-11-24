@@ -1,17 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { getAvailableStock, useCart } from "@/context/CartContext";
 import { saveOrder } from "@/lib/orders";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { normalizeIndianMobileNumber } from "@/lib/indian-mobile";
 import { CONFIRM_WITHIN } from "@/lib/orderMessages";
+import { supabase } from "@/lib/supabase";
 
 type OrderConfirmation = {
   orderNo: string;
   phone: string;
   items: { name: string; quantity: number; amount: number }[];
   total: number;
+  signedIn: boolean;
+  profileSaveError: string;
 };
 
 export default function Cart() {
@@ -31,9 +35,105 @@ export default function Cart() {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
+  const [customerPincode, setCustomerPincode] = useState("");
+  const [signedIn, setSignedIn] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [signedInName, setSignedInName] = useState("");
+  const [saveAddressToAccount, setSaveAddressToAccount] = useState(true);
+  const [profileLoadError, setProfileLoadError] = useState("");
+  const [returnToCartPath, setReturnToCartPath] = useState("/");
   const [phoneError, setPhoneError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [confirmation, setConfirmation] = useState<OrderConfirmation | null>(null);
+  const profileFieldsTouched = useRef({
+    name: false,
+    phone: false,
+    address: false,
+    pincode: false,
+  });
+
+  useEffect(() => {
+    let active = true;
+    setReturnToCartPath(
+      `${window.location.pathname}${window.location.search}`
+    );
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setSignedIn(false);
+        setSignedInName("");
+      }
+    });
+
+    void supabase.auth
+      .getUser()
+      .then(async ({ data, error }) => {
+        if (!active) return;
+        setAuthChecked(true);
+        if (error) {
+          console.error("Could not check checkout account status.");
+          return;
+        }
+        if (!data.user) return;
+
+        setSignedIn(true);
+        const metadataName =
+          typeof data.user.user_metadata?.full_name === "string"
+            ? data.user.user_metadata.full_name
+            : typeof data.user.user_metadata?.name === "string"
+              ? data.user.user_metadata.name
+              : "";
+        const displayName = metadataName.trim() || "your account";
+        setSignedInName(displayName);
+
+        try {
+          const response = await fetch("/api/account/profile", {
+            cache: "no-store",
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.error || "Unable to load saved details.");
+          }
+
+          if (!active) return;
+          const profile = result.profile;
+          const profileName =
+            typeof profile.full_name === "string" ? profile.full_name : "";
+          if (!profileFieldsTouched.current.name) {
+            setCustomerName(profileName);
+          }
+          if (!profileFieldsTouched.current.phone) {
+            setCustomerPhone(profile.phone ?? "");
+          }
+          if (!profileFieldsTouched.current.address) {
+            setCustomerAddress(profile.address ?? "");
+          }
+          if (!profileFieldsTouched.current.pincode) {
+            setCustomerPincode(profile.pincode ?? "");
+          }
+          setSignedInName(profileName || displayName);
+        } catch {
+          if (active) {
+            setProfileLoadError(
+              "Saved details couldn't be loaded. You can enter them below."
+            );
+          }
+        }
+      })
+      .catch(() => {
+        if (active) {
+          console.error("Could not check checkout account status.");
+          setAuthChecked(true);
+        }
+      });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const getItemPrice = (item: (typeof items)[0]) => {
     switch (item.priceType) {
@@ -82,12 +182,12 @@ export default function Cart() {
     try {
       const orderNo = generateOrderNumber();
 
-      await saveOrder({
+      const savedOrder = await saveOrder({
         orderNo,
         customerName,
         phone: normalizedPhone,
         address: customerAddress,
-        pincode: "",
+        pincode: customerPincode,
         subtotal: totalAmount,
         shipping: 0,
         grandTotal: totalAmount,
@@ -98,6 +198,30 @@ export default function Cart() {
         })),
       });
 
+      let profileSaveError = "";
+      const accountOrder = savedOrder.accountOrder === true;
+      if (accountOrder && saveAddressToAccount) {
+        try {
+          const response = await fetch("/api/account/profile", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              full_name: customerName,
+              phone: normalizedPhone,
+              address: customerAddress,
+              pincode: customerPincode,
+            }),
+          });
+          if (!response.ok) {
+            profileSaveError =
+              "Your order was placed, but we couldn't save these details to your account.";
+          }
+        } catch {
+          profileSaveError =
+            "Your order was placed, but we couldn't save these details to your account.";
+        }
+      }
+
       setConfirmation({
         orderNo,
         phone: normalizedPhone,
@@ -107,6 +231,8 @@ export default function Cart() {
           amount: getItemPrice(item) * item.quantity,
         })),
         total: totalAmount,
+        signedIn: accountOrder,
+        profileSaveError,
       });
       clearCart();
       setIsCartOpen(false);
@@ -174,6 +300,11 @@ export default function Cart() {
             <p className="mt-1 text-sm text-gray-500">
               Expected {CONFIRM_WITHIN}.
             </p>
+            {confirmation.profileSaveError && (
+              <p className="mt-3 text-sm text-amber-800" role="status">
+                {confirmation.profileSaveError}
+              </p>
+            )}
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <a
@@ -184,6 +315,14 @@ export default function Cart() {
               >
                 Message us on WhatsApp
               </a>
+              {confirmation.signedIn && (
+                <Link
+                  href={`/account/orders/${encodeURIComponent(confirmation.orderNo)}`}
+                  className="flex min-h-11 flex-1 items-center justify-center rounded-lg border border-brand-dark px-4 py-2 text-center font-semibold text-brand-dark hover:bg-brand-soft"
+                >
+                  View in my account
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={() => setConfirmation(null)}
@@ -395,24 +534,52 @@ export default function Cart() {
                   {/* Customer Info Form */}
                   <div className="border-t border-gray-200 pt-4 mt-4">
                     <h3 className="text-gray-800 font-semibold text-sm mb-3">Delivery Details</h3>
+                    {signedIn ? (
+                      <div className="mb-3 rounded-lg bg-brand-soft/40 px-3 py-2 text-xs text-brand-dark">
+                        Signed in as{" "}
+                        <span className="font-semibold">{signedInName}</span>
+                      </div>
+                    ) : (
+                      authChecked && (
+                        <p className="mb-3 text-xs text-gray-600">
+                          <Link
+                            href={`/account/login?next=${encodeURIComponent(returnToCartPath)}`}
+                            className="font-semibold text-brand-dark underline underline-offset-2"
+                          >
+                            Sign in to track your order
+                          </Link>
+                        </p>
+                      )
+                    )}
+                    {profileLoadError && signedIn && (
+                      <p className="mb-3 text-xs text-amber-800" role="status">
+                        {profileLoadError}
+                      </p>
+                    )}
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">Customer Name *</label>
+                        <label htmlFor="checkout-customer-name" className="block text-xs text-gray-500 mb-1">Customer Name *</label>
                         <input
+                          id="checkout-customer-name"
                           type="text"
                           placeholder="Your full name"
                           value={customerName}
-                          onChange={(e) => setCustomerName(e.target.value)}
+                          onChange={(e) => {
+                            profileFieldsTouched.current.name = true;
+                            setCustomerName(e.target.value);
+                          }}
                           className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">Phone Number *</label>
+                        <label htmlFor="checkout-customer-phone" className="block text-xs text-gray-500 mb-1">Phone Number *</label>
                         <input
+                          id="checkout-customer-phone"
                           type="tel"
                           placeholder="e.g. +91 9876543210"
                           value={customerPhone}
                           onChange={(e) => {
+                            profileFieldsTouched.current.phone = true;
                             setCustomerPhone(e.target.value);
                             if (normalizeIndianMobileNumber(e.target.value)) {
                               setPhoneError("");
@@ -450,15 +617,47 @@ export default function Cart() {
                         )}
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">Shipping Address *</label>
+                        <label htmlFor="checkout-customer-address" className="block text-xs text-gray-500 mb-1">Shipping Address *</label>
                         <textarea
+                          id="checkout-customer-address"
                           placeholder="Full delivery address with pincode"
                           value={customerAddress}
-                          onChange={(e) => setCustomerAddress(e.target.value)}
+                          onChange={(e) => {
+                            profileFieldsTouched.current.address = true;
+                            setCustomerAddress(e.target.value);
+                          }}
                           rows={2}
                           className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent resize-none"
                         />
                       </div>
+                      <div>
+                        <label htmlFor="checkout-customer-pincode" className="block text-xs text-gray-500 mb-1">Pincode</label>
+                        <input
+                          id="checkout-customer-pincode"
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="postal-code"
+                          value={customerPincode}
+                          onChange={(e) => {
+                            profileFieldsTouched.current.pincode = true;
+                            setCustomerPincode(e.target.value);
+                          }}
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
+                        />
+                      </div>
+                      {signedIn && (
+                        <label className="flex min-h-11 items-center gap-2 text-sm text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={saveAddressToAccount}
+                            onChange={(event) =>
+                              setSaveAddressToAccount(event.target.checked)
+                            }
+                            className="h-4 w-4 accent-brand-dark"
+                          />
+                          Save this address to my account
+                        </label>
+                      )}
                     </div>
                   </div>
 
